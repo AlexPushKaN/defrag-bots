@@ -153,6 +153,10 @@ button.primary{background:var(--gold)}
 .sbots{display:flex;gap:10px}.sbots i{width:44px;height:36px;border-radius:11px;background:#fff;border:3px solid var(--ink);position:relative;box-shadow:0 3px 0 var(--ink)}
 .sbots i::before,.sbots i::after{content:"";position:absolute;top:12px;width:7px;height:7px;border-radius:50%;background:var(--ink)}.sbots i::before{left:9px}.sbots i::after{right:9px}
 #dialog button.big{font-size:22px;min-height:60px}
+#dialog .daypick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
+#dialog .daypick span{font-weight:800;font-size:13px;opacity:.85;width:100%;text-align:center}
+#dialog .daypick button{min-height:40px;padding:4px 12px;font-size:14px;background:var(--cream);color:var(--ink)}
+#dialog .daypick button.on{background:var(--gold)}
 #dialog .linkish{background:none;border:0;box-shadow:none;color:inherit;text-decoration:underline;font-size:14px;font-weight:700;min-height:36px;opacity:.85}
 #dialog .stars{font-size:34px;letter-spacing:4px;text-align:center;color:var(--gold);-webkit-text-stroke:1.5px var(--ink);line-height:1}
 #dialog .unlock{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:900}
@@ -263,6 +267,7 @@ button.primary{background:var(--gold)}
     <div class="splash"><div class="sbots" aria-hidden="true"><i></i><i></i><i></i></div><h2 class="logo">Defrag Bots<small>THE GAME</small></h2></div>
     <button id="exportBtn" hidden>Отправить журналы</button>
     <button class="primary big" id="startBtn">Играть</button>
+    <div class="daypick" role="group" aria-label="С какого дня начать"><span>Начать с:</span><button type="button" data-d="1">День 1</button><button type="button" data-d="2">2</button><button type="button" data-d="3">3</button><button type="button" data-d="4">4</button><button type="button" data-d="5">Полная</button></div>
     <button class="linkish" id="skipBtn" hidden>Я уже умею — сразу полная смена</button>
     <button class="linkish" id="replayBtn" hidden>Пройти обучение заново</button>
   </div>
@@ -282,7 +287,7 @@ button.primary{background:var(--gold)}
 </div>
 <script>
 (()=>{
-// ---------- Tuning (v53: «Пройти обучение заново» on the start screen and in pause; v52: day 1 is 60 s; v51: the day card waits for «Начать» — nothing moves until the player has read it; v50: every tutorial step is shown — the game freezes, the control is spotlit, a finger shows the gesture and waits; v49: no rules screen — four tutorial days teach by doing, one-line hints at the moment of need; v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
+// ---------- Tuning (v55: while the tutorial is tuned nothing is remembered between loads (TUT_DEV): every load starts at day 1, the start screen picks any day; v54: tutorial days cannot be lost — gentle adaptive flow, robots given on days 3–4, no defeat by overflow; v53: «Пройти обучение заново» on the start screen and in pause; v52: day 1 is 60 s; v51: the day card waits for «Начать» — nothing moves until the player has read it; v50: every tutorial step is shown — the game freezes, the control is spotlit, a finger shows the gesture and waits; v49: no rules screen — four tutorial days teach by doing, one-line hints at the moment of need; v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
 const SLOW=0.5, SLOW_MAX=3;
 // v13: processing time = cells × seconds-per-cell of the type (then × specialist factor); intake overflows by cells, not files
 const GRACE=10, REFILL=0.5; // an overfull intake drains a 10 s reserve; it refills at 1 s per 2 s once fixed (v15)
@@ -291,7 +296,7 @@ const PER_CELL={TMP:1.0,DOC:1.5,PNG:1.5,RAW:1.7};
 const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
-const VERSION='v53', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v55', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -348,6 +353,7 @@ function saveText(){return saveState==='native'?'Смена сохранена �
 function reset(){
   const day=curDay();
   S={day,len:DAYS[day].len,waitFirst:day===1,slowShown:!DAYS[day].tut,over:0,reserve:GRACE,flashes:0,overflows:0,time:0,credits:0,spent:0,bots:[{id:1,pref:null,busy:null}],slowRes:SLOW_CAP0,slowCap:SLOW_CAP0,slowUps:0,slowOn:false,vs:{arrived:0,scanned:0,avDel:0,placed:0,woke:0,infected:0,killed:0,avCost:0},threats:[],queue:[],pieces:new Map(),grid:Array.from({length:ROWS},()=>Array(COLS).fill(0)),spawn:1.0,state:'play',moves:0,done:0,order:0,trashed:0,slowT:0,slowDrags:0,nextSample:0};
+  if(DAYS[day].robots)S.bots=Array.from({length:DAYS[day].robots},(_,i)=>({id:i+1,pref:null,busy:null}));
   S.threats=DAYS[day].vir==='full'?planThreats():DAYS[day].vir==='one'?[{start:38,end:38+V_WIN,left:2,on:false}]:[];
   S.queue.push(newFile(),newFile(),newFile());
   board.querySelectorAll('.piece,.pop').forEach(e=>e.remove());
@@ -498,7 +504,8 @@ function tick(now){
   if(S.state==='play'){
     S.time+=dt;
     // arrivals: one file every 2.8 s at the start, every 1.9 s at the end
-    S.spawn-=dt;if(S.spawn<=0){const k=Math.min(1,S.time/S.len),fl=DCFG().flow;S.spawn=fl[0]-(fl[0]-fl[1])*k;S.queue.push(maybeVirus(newFile(),S.spawn));}
+    S.spawn-=dt;if(S.spawn<=0&&DCFG().tut&&qCells()>=QCELLS-6)S.spawn=.4;
+    if(S.spawn<=0){const k=Math.min(1,S.time/S.len),fl=DCFG().flow;S.spawn=(fl[0]-(fl[0]-fl[1])*k)*(DCFG().tut?1+Math.max(0,fill()/(COLS*ROWS)-.45)*3:1);S.queue.push(maybeVirus(newFile(),S.spawn));}
     // robots: a specialist takes the oldest file of its type first, otherwise the oldest file of any type;
     // specialists choose before universal robots so a universal robot doesn't steal their files
     const idle=[...S.pieces.values()].filter(p=>!p.proc&&!(drag?.from==='board'&&drag.id===p.id)).sort((a,b)=>a.order-b.order);
@@ -533,7 +540,7 @@ function tick(now){
     if(L&&S.time>=S.nextSample){S.nextSample+=5;L.samples.push([r1(S.time),S.queue.length,fill(),S.credits,S.bots.length,[...S.pieces.values()].filter(p=>p.proc).length,S.bots.map(b=>b.pref||'*').join('')]);}
     // overflow grace: over 24 cells starts a 10 s countdown; getting back to 24 or less cancels it
     // the reserve drains while overfull and refills slowly after: repeated overflows add up
-    if(qCells()>QCELLS){if(!S.over){S.over=1;S.overStart=S.reserve;S.overflows++;ev('overflow',qCells(),r1(S.reserve));}S.reserve-=dt;if(S.reserve<=0){S.reserve=0;setAlarm('over',0);return end(false);}}
+    if(qCells()>QCELLS){if(!S.over){S.over=1;S.overStart=S.reserve;S.overflows++;ev('overflow',qCells(),r1(S.reserve));}S.reserve-=dt;if(DCFG().tut&&S.reserve<2)S.reserve=2; /* v54: a tutorial day cannot be lost */if(S.reserve<=0){S.reserve=0;setAlarm('over',0);return end(false);}}
     else{if(S.over){ev('overflow-fixed',r1(S.overStart-S.reserve),r1(S.reserve));S.over=0;}S.reserve=Math.min(GRACE,S.reserve+dt*REFILL);}
     setAlarm(S.over?'over':S.reserve<GRACE-0.05?'refill':'',S.reserve);
     maybeFlash();fxBits(dt);sfxTick(dt);tutTick();
@@ -960,18 +967,21 @@ function renderSlowBtn(){if(!S)return;const on=!!S.slowOn,empty=!on&&S.slowRes<.
 // (a ghost finger shows it). Stars from the first day: ★ survived, ★★ ≤1 overflow, ★★★ no overflow. Skip → full game.
 const DAYS={
   1:{tut:1,len:60,flow:[3.4,2.6],types:{TMP:60,DOC:40},buy:0,spec:0,clusters:0,vir:0,slowUp:0,title:'Первая смена',lines:['Клади файлы в память','Роботы их разберут'],unlock:'Покупка роботов'},
-  2:{tut:1,len:SHIFT,flow:[3.0,2.2],buy:1,spec:1,clusters:0,vir:0,slowUp:0,title:'Команда роботов',lines:['Покупай роботов за кредиты','Зажми робота — выбери ему тип файлов'],unlock:'Кластеры'},
-  3:{tut:1,len:SHIFT,flow:FLOW,repeat:.45,buy:1,spec:1,clusters:1,vir:0,slowUp:0,title:'Кластеры',lines:['Одинаковые файлы рядом','уходят вместе и быстрее'],unlock:'Вирусы'},
-  4:{tut:1,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет робот-антивирус'],unlock:'Полная игра'},
+  2:{tut:1,len:SHIFT,flow:[3.2,2.6],types:{TMP:35,DOC:35,PNG:20,RAW:10},buy:1,spec:1,clusters:0,vir:0,slowUp:0,title:'Команда роботов',lines:['Покупай роботов за кредиты','Зажми робота — выбери ему тип файлов'],unlock:'Кластеры'},
+  3:{tut:1,len:SHIFT,flow:[3.1,2.5],types:{TMP:20,DOC:35,PNG:35,RAW:10},robots:2,repeat:.45,buy:1,spec:1,clusters:1,vir:0,slowUp:0,title:'Кластеры',lines:['Одинаковые файлы рядом','уходят вместе и быстрее'],unlock:'Вирусы'},
+  4:{tut:1,len:SHIFT,flow:[3.0,2.4],types:{TMP:25,DOC:35,PNG:30,RAW:10},robots:3,buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет робот-антивирус'],unlock:'Полная игра'},
   0:{tut:0,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'full',slowUp:1}};
 const DCFG=()=>DAYS[S?.day??0]||DAYS[0];
-let PROG={day:1,hintsOff:false};try{const o=JSON.parse(localStorage.getItem('defrag-progress-v50')||'null');if(o)PROG={...PROG,...o};}catch(e){}
-function setProg(day,extra){PROG={...PROG,day,...extra};try{localStorage.setItem('defrag-progress-v50',JSON.stringify(PROG));}catch(e){}}
+// TUT_DEV (author, 2026-11-11): while the tutorial is being tuned, every load starts at day 1 and shows every step again;
+// progress lives only until the page is closed. Set to false for the release: then progress is kept for each player.
+const TUT_DEV=true;
+let PROG={day:1,hintsOff:false};if(!TUT_DEV)try{const o=JSON.parse(localStorage.getItem('defrag-progress-v50')||'null');if(o)PROG={...PROG,...o};}catch(e){}
+function setProg(day,extra){PROG={...PROG,day,...extra};if(!TUT_DEV)try{localStorage.setItem('defrag-progress-v50',JSON.stringify(PROG));}catch(e){}}
 const curDay=()=>PROG.day>=1&&PROG.day<=4?PROG.day:0;
-let SEEN={};try{SEEN=JSON.parse(localStorage.getItem('defrag-coach-v50')||'{}')||{};}catch(e){}
+let SEEN={};if(!TUT_DEV)try{SEEN=JSON.parse(localStorage.getItem('defrag-coach-v50')||'{}')||{};}catch(e){}
 let hintEl=null,hintKey='',hintTimer=0,fingerEl=null;
 // one line near `anchor` (element or {x,y}); shown once per key unless opts.force; disappears after ttl or done(key)
-function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff))return false;if(hintEl&&!opts.force){setTimeout(()=>hint(key,text,anchor,opts),1500);return false;}if(!opts.force){SEEN[key]=1;try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}}
+function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff))return false;if(hintEl&&!opts.force){setTimeout(()=>hint(key,text,anchor,opts),1500);return false;}if(!opts.force){SEEN[key]=1;if(!TUT_DEV)try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}}
   clearHint();const r=anchor?.getBoundingClientRect?anchor.getBoundingClientRect():{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y,width:0};
   const h=document.createElement('div');h.className='hint';h.textContent=text;h.setAttribute('role','status');document.body.append(h);
   const w=h.offsetWidth,ht=h.offsetHeight,cx=(r.left+r.right)/2,above=r.top-ht-14>8&&!opts.below;
@@ -1005,7 +1015,7 @@ function tutPlaced(){if(!S?.waitFirst)return;S.waitFirst=false;finger(false);cle
 // Author (2026-11-11): «показывать каждую кнопку, нажимать и показывать», including slow time.
 let spotEl=null,coachEl=null;
 function coach(o){if(SEEN[o.key]||PROG.hintsOff)return false;if(S.coach)return false;
-  SEEN[o.key]=1;try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}
+  SEEN[o.key]=1;if(!TUT_DEV)try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}
   clearHint();S.coach=o;o.t0=performance.now();ev('coach',o.key);sfx('ready');haptic('light');
   spotEl=document.createElement('div');spotEl.className='spot';document.body.append(spotEl);
   coachEl=document.createElement('div');coachEl.className='coach';coachEl.setAttribute('role','status');
@@ -1040,8 +1050,8 @@ function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst||S.wait
     coach({key:'robot',text:'Робот сам забирает файлы из памяти',sub:'Разобранный файл освобождает место и приносит кредиты',target:()=>robotsEl.querySelector('.rcard'),button:'Понятно'});
   else if(once('rot',()=>S.queue.length>0&&(S.time>=10||S.badDrop))){rotBtn.classList.remove('tut-hide');
     coach({key:'rotate',text:touch?'Поверни файл: коснись его на входе':'Поверни файл: кликни по нему на входе',sub:touch?'Когда несёшь файл пальцем — крути его кнопкой ⟳ другой рукой':'Пока несёшь файл — R, пробел или правый клик',target:()=>slots[0],gesture:'tap',until:a=>a[0]==='rotate'||a[0]==='rotate-key'||(a[0]==='rot-btn'&&a[2])||(a[0]==='drop'&&/^rotate/.test(a[3]))});}
-  else if(once('slow',()=>S.over)){if(!S.slowShown){S.slowShown=true;renderSlowBtn();}
-    coach({key:'slow',text:'Вход переполнен! Нажми ⏳ — время пойдёт вдвое медленнее',sub:'Нажми ещё раз — остановишь. Запас (полоска) копится сам',target:slowBtn,gesture:'tap',until:a=>a[0]==='slow-on'});}
+  else if(once('slow',()=>S.over||qCells()>=QCELLS-6)){if(!S.slowShown){S.slowShown=true;renderSlowBtn();}
+    coach({key:'slow',text:'Вход заполняется! Нажми ⏳ — время пойдёт вдвое медленнее',sub:'Нажми ещё раз — остановишь. Запас (полоска) копится сам',target:slowBtn,gesture:'tap',until:a=>a[0]==='slow-on'});}
   else if(c.buy&&once('buy',()=>S.credits>=PRICES[0]&&S.bots.length===1&&$('buy')))
     coach({key:'buy',text:'Хватает кредитов — купи второго робота',sub:'Два робота разбирают память вдвое быстрее',target:()=>$('buy'),gesture:'tap',until:a=>a[0]==='buy'});
   else if(c.spec&&once('spec',()=>S.bots.length>=2))
@@ -1070,6 +1080,11 @@ function pause2(){S.state='play';pause();}
 $('skipBtn').hidden=curDay()===0;$('replayBtn').hidden=curDay()!==0;
 function replayTutorial(){SEEN={};try{localStorage.removeItem('defrag-coach-v50');}catch(e){}setProg(1,{hintsOff:false});if(S)ev('replay-tutorial');const rb=$('replayBtn');if(rb)rb.hidden=true;if(S?.state==='pause')S.state='play';start();}
 $('replayBtn').onclick=replayTutorial;
+// v55 (author): on every load the start screen lets him start from any day — day 1 to 4 or the full shift
+function startDay(d){SEEN={};try{localStorage.removeItem('defrag-coach-v50');}catch(e){}setProg(d,{hintsOff:d>4});start();}
+document.querySelectorAll('#dialog .daypick button').forEach(b=>{b.classList.toggle('on',+b.dataset.d===(curDay()||5));b.onclick=()=>startDay(+b.dataset.d);});
+$('skipBtn').hidden=true;$('replayBtn').hidden=true;
+$('startBtn').textContent=curDay()?'Играть · день '+curDay():'Играть · полная смена';
 $('skipBtn').onclick=()=>{setProg(5,{hintsOff:true});$('skipBtn').hidden=true;start();};
 if(curDay()>1)$('startBtn').textContent='Играть · день '+curDay();
 tutLabels(curDay());
