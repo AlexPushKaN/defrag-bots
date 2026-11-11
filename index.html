@@ -165,6 +165,12 @@ button.primary{background:var(--gold)}
 .hint.below::after{top:-8px;border-right:0;border-bottom:0}.hint.above::after{bottom:-8px;border-left:0;border-top:0}
 .tfinger{position:fixed;z-index:85;pointer-events:none;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid #fff;box-shadow:0 0 0 7px rgba(255,255,255,.18)}
 .tut-hide{display:none!important}
+.spot{position:fixed;z-index:70;pointer-events:none;border-radius:16px;border:3px solid #fff;box-shadow:0 0 0 9999px rgba(12,10,40,.62),0 0 18px 4px rgba(255,255,255,.55);transition:all .2s ease}
+.coach{position:fixed;z-index:95;background:var(--cream);color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:10px 12px;font-weight:800;font-size:15px;line-height:1.3;box-shadow:0 4px 0 var(--ink);width:min(320px,86vw);box-sizing:border-box;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.coach small{font-weight:600;font-size:13px;color:#4a4680}
+.coach button{min-height:40px;padding:4px 22px;font-size:15px;background:var(--gold)}
+.tfinger.hold::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:3px solid #fff;animation:holdring 1.4s ease-out infinite}
+@keyframes holdring{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.6);opacity:0}}
 .legend span{font-size:11px;font-weight:900;padding:3px 8px;border-radius:8px;border:2px solid var(--ink)}
 .stat{font-family:var(--mono);font-size:28px;font-weight:700}
 #fan{position:fixed;inset:0;z-index:90;pointer-events:none}
@@ -273,7 +279,7 @@ button.primary{background:var(--gold)}
 </div>
 <script>
 (()=>{
-// ---------- Tuning (v49: no rules screen — four tutorial days teach by doing, one-line hints at the moment of need; v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
+// ---------- Tuning (v50: every tutorial step is shown — the game freezes, the control is spotlit, a finger shows the gesture and waits; v49: no rules screen — four tutorial days teach by doing, one-line hints at the moment of need; v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
 const SLOW=0.5, SLOW_MAX=3;
 // v13: processing time = cells × seconds-per-cell of the type (then × specialist factor); intake overflows by cells, not files
 const GRACE=10, REFILL=0.5; // an overfull intake drains a 10 s reserve; it refills at 1 s per 2 s once fixed (v15)
@@ -282,7 +288,7 @@ const PER_CELL={TMP:1.0,DOC:1.5,PNG:1.5,RAW:1.7};
 const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
-const VERSION='v49', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v50', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -317,7 +323,7 @@ function logStart(){L={v:VERSION,id:Date.now().toString(36)+Math.random().toStri
   files:{},ev:[],samples:[],result:null};}
 function logArrive(f){if(L)L.files[f.id]={ty:f.type,si:f.si,a:r1(S?S.time:0),v:null,p:null,r:0,d:0,f:0,m:0,x:null,y:null,out:'wait'};}
 const F=id=>L?.files[id];
-function ev(...a){if(L&&L.ev.length<1500)L.ev.push([r1(S.time),...a]);try{sfxEvent(a);}catch(e){}try{tutEv(a[0]);}catch(e){}}
+function ev(...a){if(L&&L.ev.length<1500)L.ev.push([r1(S.time),...a]);try{sfxEvent(a);}catch(e){}try{tutEv(a);}catch(e){}}
 
 // ---------- Saving the record (db capability; falls back to "copy report") ----------
 let dbP=null, saveChain=Promise.resolve(), saveState='';
@@ -485,7 +491,7 @@ function tick(now){
   if(S.state==='play')slowTick(rdt);
   const slow=!!(S.state==='play'&&(S.slowOn||(drag?.moved&&drag.from==='board'&&(performance.now()-drag.movedAt)/1000<SLOW_MAX)||(fanState&&(performance.now()-fanState.t0)/1000<SLOW_MAX)));
   const dt=slow?rdt*SLOW:rdt;if(slow)S.slowT+=rdt;setSlowUi(slow);
-  if(S.state==='play'&&S.waitFirst){render();tutTick();raf=requestAnimationFrame(tick);return;}
+  if(S.state==='play'&&(S.waitFirst||S.coach)){render();tutTick();coachPos();raf=requestAnimationFrame(tick);return;}
   if(S.state==='play'){
     S.time+=dt;
     // arrivals: one file every 2.8 s at the start, every 1.9 s at the end
@@ -533,7 +539,7 @@ function tick(now){
   }
   raf=requestAnimationFrame(tick);
 }
-function end(win){setAlarm('');cancelDrag();closeFan();setSlowUi(false);S.state='over';cancelAnimationFrame(raf);render();musicStop();S.slowOn=false;document.body.classList.remove('slowmo');sfx(win?'win':'lose');haptic(win?'success':'error');$('laneHint').textContent=win?'смена закрыта':'вход переполнен';
+function end(win){if(S?.coach)endCoach('end');clearHint();setAlarm('');cancelDrag();closeFan();setSlowUi(false);S.state='over';cancelAnimationFrame(raf);render();musicStop();S.slowOn=false;document.body.classList.remove('slowmo');sfx(win?'win':'lose');haptic(win?'success':'error');$('laneHint').textContent=win?'смена закрыта':'вход переполнен';
   const stars=win?(S.overflows===0?3:S.overflows<=1?2:1):0,dayWas=S.day,tut=!!DAYS[dayWas].tut;if(win&&tut)setProg(dayWas+1);
   L.result={day:dayWas,stars,slow:{ups:S.slowUps,starts:S.slowStarts||0,used:r1(S.slowUsed||0)},vir:{...S.vs},win,overflows:S.overflows,flashes:S.flashes,reserveEnd:r1(S.reserve),slowT:r1(S.slowT),slowDrags:S.slowDrags,t:r1(S.time),credits:S.credits,spent:S.spent,done:S.done,moves:S.moves,trashed:S.trashed,robots:S.bots.length,prefs:S.bots.map(b=>b.pref),fill:fill(),queue:S.queue.length,endedAt:new Date().toISOString()};
   saveState='';saveRun();
@@ -571,7 +577,7 @@ function snap(shape,ox,oy,ignore=0){
   for(const [dx,dy] of NEAR)if(fits(shape,ox+dx,oy+dy,ignore))return {ox:ox+dx,oy:oy+dy};return null;}
 function flashBad(file,ox,oy){if(S)S.badDrop=1;const g=drawShape(board,file,cell,'ghost bad flash');Object.assign(g.style,{left:ox*cell+'px',top:oy*cell+'px'});setTimeout(()=>g.remove(),350);}
 const qIndex=id=>S.queue.findIndex(f=>f.id===id);
-function rotateQueued(id,why){const i=qIndex(id);if(i<0)return;done('rotate');S.queue[i].shape=rotate(S.queue[i].shape);const l=F(id);if(l)l.r++;diag('поворот: '+why);render();}
+function rotateQueued(id,why){const i=qIndex(id);if(i<0)return;tutEv(['rotate']);S.queue[i].shape=rotate(S.queue[i].shape);const l=F(id);if(l)l.r++;diag('поворот: '+why);render();}
 
 function beginDrag(e,from,file,gx,gy,slotEl){
   cancelDrag();
@@ -956,13 +962,13 @@ const DAYS={
   4:{tut:1,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет робот-антивирус'],unlock:'Полная игра'},
   0:{tut:0,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'full',slowUp:1}};
 const DCFG=()=>DAYS[S?.day??0]||DAYS[0];
-let PROG={day:1,hintsOff:false};try{const o=JSON.parse(localStorage.getItem('defrag-progress')||'null');if(o)PROG={...PROG,...o};}catch(e){}
-function setProg(day,extra){PROG={...PROG,day,...extra};try{localStorage.setItem('defrag-progress',JSON.stringify(PROG));}catch(e){}}
+let PROG={day:1,hintsOff:false};try{const o=JSON.parse(localStorage.getItem('defrag-progress-v50')||'null');if(o)PROG={...PROG,...o};}catch(e){}
+function setProg(day,extra){PROG={...PROG,day,...extra};try{localStorage.setItem('defrag-progress-v50',JSON.stringify(PROG));}catch(e){}}
 const curDay=()=>PROG.day>=1&&PROG.day<=4?PROG.day:0;
-let SEEN={};try{SEEN=JSON.parse(localStorage.getItem('defrag-hints')||'{}')||{};}catch(e){}
+let SEEN={};try{SEEN=JSON.parse(localStorage.getItem('defrag-coach-v50')||'{}')||{};}catch(e){}
 let hintEl=null,hintKey='',hintTimer=0,fingerEl=null;
 // one line near `anchor` (element or {x,y}); shown once per key unless opts.force; disappears after ttl or done(key)
-function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff))return false;if(!opts.force){SEEN[key]=1;try{localStorage.setItem('defrag-hints',JSON.stringify(SEEN));}catch(e){}}
+function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff))return false;if(hintEl&&!opts.force){setTimeout(()=>hint(key,text,anchor,opts),1500);return false;}if(!opts.force){SEEN[key]=1;try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}}
   clearHint();const r=anchor?.getBoundingClientRect?anchor.getBoundingClientRect():{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y,width:0};
   const h=document.createElement('div');h.className='hint';h.textContent=text;h.setAttribute('role','status');document.body.append(h);
   const w=h.offsetWidth,ht=h.offsetHeight,cx=(r.left+r.right)/2,above=r.top-ht-14>8&&!opts.below;
@@ -970,7 +976,7 @@ function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff
   Object.assign(h.style,{left:x+'px',top:y+'px','--ax':Math.max(14,Math.min(w-14,cx-x))+'px'});h.classList.add(above?'above':'below');
   if(!REDUCED)h.animate([{transform:'scale(.6)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.6},{transform:'scale(1)'}],{duration:260,easing:'ease-out'});
   hintEl=h;hintKey=key;if(!opts.force&&S)ev('hint',key);sfx('ready');haptic('light');
-  clearTimeout(hintTimer);if(opts.ttl!==0)hintTimer=setTimeout(clearHint,opts.ttl||5000);return true;}
+  clearTimeout(hintTimer);if(opts.ttl!==0)hintTimer=setTimeout(clearHint,opts.ttl||6000);return true;}
 function clearHint(){clearTimeout(hintTimer);hintEl?.remove();hintEl=null;hintKey='';}
 function done(key){if(hintKey===key)clearHint();}
 function finger(on){fingerEl?.remove();fingerEl=null;if(!on||REDUCED)return;const sl=slots[0],r0=sl.getBoundingClientRect(),br=board.getBoundingClientRect();
@@ -979,31 +985,76 @@ function finger(on){fingerEl?.remove();fingerEl=null;if(!on||REDUCED)return;cons
   f.animate([{left:a.x+'px',top:a.y+'px',opacity:0,offset:0},{left:a.x+'px',top:a.y+'px',opacity:1,offset:.15},{left:b.x+'px',top:b.y+'px',opacity:1,offset:.6},{left:b.x+'px',top:b.y+'px',opacity:1,offset:.75},{left:b.x+'px',top:b.y+'px',opacity:0,offset:1}],{duration:2400,iterations:Infinity,easing:'ease-in-out'});}
 function tutLabels(d){const c=DAYS[d];document.querySelector('#app .title h1').textContent=c.tut?'День '+d:'Defrag Bots';$('status').textContent=c.tut?`Обучение · день ${d} из 4`:'Смена · 2 минуты';}
 function tutStart(){const c=DAYS[S.day];tutLabels(S.day);
-  rotBtn.classList.toggle('tut-hide',S.day===1&&!SEEN.rotate);S.tut={};clearHint();
+  rotBtn.classList.toggle('tut-hide',S.day===1&&!SEEN.rotate);S.tut={};clearHint();spotEl?.remove();coachEl?.remove();spotEl=coachEl=null;
   if(c.tut){const d=document.createElement('div');d.className='daycard';d.innerHTML=`<div class="k">ДЕНЬ ${S.day} ИЗ 4 · ${c.len} СЕКУНД</div><h3>${c.title}</h3><ul>${c.lines.map(l=>'<li>'+l+'</li>').join('')}</ul>`;document.body.append(d);
     const t=S.waitFirst?1600:1800;d.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.85)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)',offset:.12},{opacity:1,offset:.85},{opacity:0}],{duration:t}).onfinish=()=>d.remove();
     if(S.waitFirst)setTimeout(()=>{if(S?.waitFirst&&S.state==='play'){finger(true);hint('drag','Перетащи файл в память',board,{force:1,ttl:0,below:1});}},t-200);}}
 function tutPlaced(){if(!S?.waitFirst)return;S.waitFirst=false;finger(false);clearHint();last=performance.now();ev('first-place');}
-// event-driven hints, checked every frame (cheap: each fires once)
-function tutTick(){if(!S||S.state!=='play'||!S.tut)return;const c=DCFG(),T=S.tut,once=(k,f)=>{if(!T[k]&&f()){T[k]=1;return true;}return false;};
-  if(once('robot',()=>!S.waitFirst&&[...S.pieces.values()].some(p=>p.proc)))hint('robot','Робот сам разбирает файлы и платит кредиты',robotsEl);
-  if(S.day===1&&once('rot',()=>!S.waitFirst&&(S.time>=12||S.badDrop)))
-    {rotBtn.classList.remove('tut-hide');hint('rotate',matchMedia('(pointer:coarse)').matches?'Поверни: тап по файлу или ⟳':'Поверни: R, пробел или правый клик',rotBtn);}
-  if(once('slow',()=>S.over)){if(!S.slowShown){S.slowShown=true;renderSlowBtn();}hint('slow','Не успеваешь? Замедли время ⏳',slowBtn);}
-  if(c.buy&&once('buy',()=>S.credits>=PRICES[0]&&S.bots.length===1))hint('buy','Купи второго робота — он ускорит работу',$('buy')||robotsEl);
-  if(c.spec&&once('spec',()=>S.bots.length>=2))hint('spec','Зажми робота и выбери тип: свои файлы он делает быстрее',robotsEl.querySelector('.rcard')||robotsEl);
-  if(c.clusters&&!T.cluster&&S.time%0.5<0.05&&once('cluster',()=>clustersNow().size>0)){const id=[...clustersNow().keys()][0],el=board.querySelector(`.piece[data-id="${id}"]`);hint('cluster','Кластер! Одинаковые файлы рядом уходят вместе и быстрее',el||board);}
-  if(c.vir&&once('threat',()=>!!threatNow()))hint('threat','В потоке вирус! Сделай одного робота антивирусом (AV)',robotsEl);
-  if(c.vir&&once('sus',()=>[...S.pieces.values()].some(p=>p.sus&&!p.awake))){const p=[...S.pieces.values()].find(p=>p.sus&&!p.awake);hint('sus','«?» — файл не проверен. Антивирус проверит',board.querySelector(`.piece[data-id="${p.id}"]`)||board);}
-  if(c.vir&&once('awake',()=>[...S.pieces.values()].some(p=>p.awake))){const p=[...S.pieces.values()].find(p=>p.awake);hint('awake','Вирус проснулся! Унеси его от соседей — иначе заразит',board.querySelector(`.piece[data-id="${p.id}"]`)||board);}
-  if(c.slowUp&&once('slowup',()=>S.slowShown&&S.credits>=60&&S.slowUps===0&&S.bots.length>=MAXR))hint('slowup','Лишние кредиты? +2 с к запасу замедления',slowUp);}
+// ---- Coach (v50): one step at a time — the game freezes, the control is spotlit, a finger shows the gesture,
+// the text stays until the player does it (or presses «Понятно» for steps that are only to see).
+// Author (2026-11-11): «показывать каждую кнопку, нажимать и показывать», including slow time.
+let spotEl=null,coachEl=null;
+function coach(o){if(SEEN[o.key]||PROG.hintsOff)return false;if(S.coach)return false;
+  SEEN[o.key]=1;try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}
+  clearHint();S.coach=o;o.t0=performance.now();ev('coach',o.key);sfx('ready');haptic('light');
+  spotEl=document.createElement('div');spotEl.className='spot';document.body.append(spotEl);
+  coachEl=document.createElement('div');coachEl.className='coach';coachEl.setAttribute('role','status');
+  coachEl.innerHTML=`<div>${o.text}</div>`+(o.sub?`<small>${o.sub}</small>`:'')+(o.button?`<button type="button">${o.button}</button>`:'');document.body.append(coachEl);
+  if(o.button)coachEl.querySelector('button').onclick=()=>endCoach('ok');
+  if(o.gesture){fingerEl?.remove();const f=document.createElement('div');f.className='tfinger'+(o.gesture==='hold'?' hold':'');document.body.append(f);fingerEl=f;}
+  coachPos(true);if(!REDUCED&&coachEl)coachEl.animate([{transform:'scale(.7)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:220,easing:'ease-out'});return true;}
+function endCoach(why){const o=S?.coach;if(!o)return;S.coach=null;spotEl?.remove();coachEl?.remove();spotEl=coachEl=null;fingerEl?.remove();fingerEl=null;
+  ev('coach-done',o.key,why,r1((performance.now()-o.t0)/1000));last=performance.now();if(o.after)setTimeout(()=>{if(S?.state==='play')o.after();},250);}
+const rectOf=t=>{const el=typeof t==='function'?t():t;if(!el)return null;if(el.getBoundingClientRect){const r=el.getBoundingClientRect();return r.width||r.height?r:null;}return {left:el.x-20,top:el.y-20,right:el.x+20,bottom:el.y+20,width:40,height:40};};
+let fingerKey='';
+function coachPos(force){const o=S?.coach;if(!o||!spotEl)return;const r=rectOf(o.target);if(!r)return;const pad=6;
+  Object.assign(spotEl.style,{left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'});
+  const ch=coachEl.offsetHeight,cw=coachEl.offsetWidth,above=r.top-ch-24>8,cx=(r.left+r.right)/2;
+  if(o.place==='top'){const br=board.getBoundingClientRect();Object.assign(coachEl.style,{left:Math.max(8,(innerWidth-cw)/2)+'px',top:br.top+10+'px'});} // keeps the fan above the robot free
+  else Object.assign(coachEl.style,{left:Math.max(8,Math.min(innerWidth-cw-8,cx-cw/2))+'px',top:(above?r.top-ch-22:Math.min(innerHeight-ch-8,r.bottom+22))+'px'});
+  if(!fingerEl||REDUCED)return;const k=Math.round(r.left)+','+Math.round(r.top)+','+Math.round(r.width);if(!force&&k===fingerKey)return;fingerKey=k;
+  fingerEl.getAnimations().forEach(a=>a.cancel());const c={x:cx,y:(r.top+r.bottom)/2};
+  if(o.gesture==='tap')fingerEl.animate([{left:c.x+'px',top:c.y+'px',transform:'scale(1)'},{left:c.x+'px',top:c.y+'px',transform:'scale(.7)',offset:.3},{left:c.x+'px',top:c.y+'px',transform:'scale(1)',offset:.6},{left:c.x+'px',top:c.y+'px',transform:'scale(1)'}],{duration:1200,iterations:Infinity});
+  else if(o.gesture==='hold')fingerEl.animate([{left:c.x+'px',top:c.y+'px',transform:'scale(1)'},{left:c.x+'px',top:c.y+'px',transform:'scale(.75)',offset:.15},{left:c.x+'px',top:c.y+'px',transform:'scale(.75)',offset:.85},{left:c.x+'px',top:c.y+'px',transform:'scale(1)'}],{duration:1800,iterations:Infinity});
+  else if(o.gesture==='drag'){const d=rectOf(o.to)||{left:c.x+80,right:c.x+80,top:c.y,bottom:c.y};const e={x:(d.left+d.right)/2,y:(d.top+d.bottom)/2};
+    fingerEl.animate([{left:c.x+'px',top:c.y+'px',opacity:0},{left:c.x+'px',top:c.y+'px',opacity:1,offset:.15},{left:e.x+'px',top:e.y+'px',opacity:1,offset:.6},{left:e.x+'px',top:e.y+'px',opacity:0,offset:.8},{left:e.x+'px',top:e.y+'px',opacity:0}],{duration:2400,iterations:Infinity,easing:'ease-in-out'});}}
+// what ends a step: tutEv gets every logged event
+function tutEv(a){const k=a[0],o=S?.coach;const m={'buy':'buy','pref':'spec','slow-on':'slow','rotate':'rotate','rot-btn':'rotate','rotate-key':'rotate'};if(m[k])done(m[k]);
+  if(o&&o.until&&o.until(a))endCoach('did');}
+const pieceEl=id=>board.querySelector(`.piece[data-id="${id}"]`);
+const emptySpot=()=>{const br=board.getBoundingClientRect();for(let y=ROWS-1;y>=0;y--)for(let x=0;x<COLS;x++)if(!S.grid[y][x]&&!(S.grid[y][x-1])&&!(S.grid[y][x+1])&&!(S.grid[y-1]?.[x])&&!(S.grid[y+1]?.[x]))return {x:br.left+(x+.5)*cell,y:br.top+(y+.5)*cell};return {x:br.left+br.width/2,y:br.top+br.height-cell};};
+// the steps, in order of the tutorial; each fires once (also in later days and in the full game if never seen)
+function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst)return;const c=DCFG(),T=S.tut,once=(k,f)=>{if(!T[k]&&f()){T[k]=1;return true;}return false;};
+  const touch=matchMedia('(pointer:coarse)').matches;
+  if(once('robot',()=>[...S.pieces.values()].some(p=>p.proc)))
+    coach({key:'robot',text:'Робот сам забирает файлы из памяти',sub:'Разобранный файл освобождает место и приносит кредиты',target:()=>robotsEl.querySelector('.rcard'),button:'Понятно'});
+  else if(once('rot',()=>S.queue.length>0&&(S.time>=10||S.badDrop))){rotBtn.classList.remove('tut-hide');
+    coach({key:'rotate',text:touch?'Поверни файл: коснись его на входе':'Поверни файл: кликни по нему на входе',sub:touch?'Когда несёшь файл пальцем — крути его кнопкой ⟳ другой рукой':'Пока несёшь файл — R, пробел или правый клик',target:()=>slots[0],gesture:'tap',until:a=>a[0]==='rotate'||a[0]==='rotate-key'||(a[0]==='rot-btn'&&a[2])||(a[0]==='drop'&&/^rotate/.test(a[3]))});}
+  else if(once('slow',()=>S.over)){if(!S.slowShown){S.slowShown=true;renderSlowBtn();}
+    coach({key:'slow',text:'Вход переполнен! Нажми ⏳ — время пойдёт вдвое медленнее',sub:'Нажми ещё раз — остановишь. Запас (полоска) копится сам',target:slowBtn,gesture:'tap',until:a=>a[0]==='slow-on'});}
+  else if(c.buy&&once('buy',()=>S.credits>=PRICES[0]&&S.bots.length===1&&$('buy')))
+    coach({key:'buy',text:'Хватает кредитов — купи второго робота',sub:'Два робота разбирают память вдвое быстрее',target:()=>$('buy'),gesture:'tap',until:a=>a[0]==='buy'});
+  else if(c.spec&&once('spec',()=>S.bots.length>=2))
+    coach({key:'spec',text:touch?'Зажми робота и, не отпуская, веди палец к типу файлов':'Нажми на робота и выбери тип файлов',sub:'Специалист берёт свои файлы первыми и делает их на 20% быстрее',target:()=>robotsEl.querySelector('.rcard'),gesture:'hold',place:'top',until:a=>a[0]==='pref'});
+  else if(c.clusters&&!T.cluster&&S.time%0.5<0.05&&once('cluster',()=>clustersNow().size>0)){const id=[...clustersNow().keys()][0];
+    coach({key:'cluster',text:'Кластер! Одинаковые файлы рядом уходят одним куском',sub:'Вместе быстрее и с ярким финалом. Клади одинаковые файлы рядом',target:()=>pieceEl(id),button:'Понятно'});}
+  else if(c.vir&&once('threat',()=>!!threatNow())){const bot=S.bots.find(b=>b.pref!=='AV')||S.bots[0];
+    coach({key:'threat',text:'В потоке вирус! Сделай одного робота антивирусом',sub:'Зажми робота и выбери зелёный AV. Он ловит вирусы, но тратит 1 кр. каждые 2 с',target:()=>robotsEl.querySelector(`[data-bot="${bot.id}"]`),gesture:'hold',place:'top',until:a=>a[0]==='pref'&&a[2]==='AV'});}
+  else if(c.vir&&once('sus',()=>[...S.pieces.values()].some(p=>p.sus&&!p.awake))){const p=[...S.pieces.values()].find(p=>p.sus&&!p.awake);
+    coach({key:'sus',text:'«?» — файл пришёл во время угрозы, он может быть вирусом',sub:'Антивирус проверит его и снимет «?»',target:()=>pieceEl(p.id),button:'Понятно'});}
+  else if(c.vir&&once('awake',()=>[...S.pieces.values()].some(p=>p.awake))){const p=[...S.pieces.values()].find(p=>p.awake);
+    coach({key:'awake',text:'Вирус проснулся! Перетащи его подальше от соседей',sub:'Иначе он заразит их. Антивирус его удалит',target:()=>pieceEl(p.id),gesture:'drag',to:emptySpot(),until:a=>(a[0]==='drop'&&a[2]===p.id)||(a[0]==='virus-killed'&&a[1]===p.id),button:'Понятно'});}
+  else if(c.slowUp&&once('slowup',()=>S.slowShown&&S.credits>=40&&S.slowUps===0&&S.bots.length>=MAXR))
+    coach({key:'slowup',text:'Лишние кредиты? Увеличь запас замедления',sub:'+2 с за 15 кр., до трёх раз за смену',target:slowUp,gesture:'tap',until:a=>a[0]==='slow-up',button:'Позже'});
+  // small notes that need no action
+  if(once('boostnote',()=>L?.ev.some(e=>e[1]==='spec-boost')))hint('boost','Тот же тип, что в работе, — и работа пошла быстрее',robotsEl,{ttl:6000});
+}
 // pause extras: the full rules (moved here from the start screen) and, during the tutorial, a way to skip it
 function pauseExtras(){const row=document.createElement('div');row.className='row';
   const rb=document.createElement('button');rb.textContent='Правила';rb.onclick=()=>{const back=$('dialog').innerHTML;$('dialog').innerHTML=$('rulesTpl').innerHTML+'<button class="primary" id="rulesBack">Назад</button>';$('rulesBack').onclick=()=>{$('dialog').innerHTML='';pause2();};};
   row.append(rb);
   if(DAYS[S.day].tut){const sk=document.createElement('button');sk.textContent='Пропустить обучение';sk.onclick=()=>{setProg(5,{hintsOff:true});ev('skip-tutorial',S.day);S.state='play';start();};row.append(sk);}
   $('dialog').append(row);}
-function tutEv(k){const m={'buy':'buy','pref':'spec','slow-on':'slow','rot-btn':'rotate','rotate-key':'rotate','spec-boost':''};if(m[k])done(m[k]);}
 function pause2(){S.state='play';pause();}
 $('skipBtn').hidden=curDay()===0;
 $('skipBtn').onclick=()=>{setProg(5,{hintsOff:true});$('skipBtn').hidden=true;start();};
