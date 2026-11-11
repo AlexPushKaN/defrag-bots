@@ -253,7 +253,7 @@ button.primary{background:var(--gold)}
 </div>
 <script>
 (()=>{
-// ---------- Tuning (v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
+// ---------- Tuning (v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
 const SLOW=0.5, SLOW_MAX=3;
 // v13: processing time = cells × seconds-per-cell of the type (then × specialist factor); intake overflows by cells, not files
 const GRACE=10, REFILL=0.5; // an overfull intake drains a 10 s reserve; it refills at 1 s per 2 s once fixed (v15)
@@ -262,7 +262,7 @@ const PER_CELL={TMP:1.0,DOC:1.5,PNG:1.5,RAW:1.7};
 const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
-const VERSION='v47', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v48', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -491,7 +491,7 @@ function tick(now){
       const ms=pr.members.map(id=>S.pieces.get(id)).filter(Boolean);let sum=0;
       for(const q of ms){setCells(q,0);S.pieces.delete(q.id);const rw=pieceReward(q);S.credits+=rw;sum+=rw;S.done++;const l=F(q.id);if(l)l.out=q.vir?'virus-killed':q.infected?'done-infected':'done';}
       for(const id of pr.bots){const b=S.bots.find(b=>b.id===id);if(b&&b.busy===pr.lead)b.busy=null;}
-      if(ms.length>1){popAt(ms[0],'+'+sum);ev('cluster-done',pr.lead,ms.length,pr.bots.length,r1(pr.dur));fxCluster(ms,pr.bots.length);}
+      if(ms.length>1){popAt(ms[0],'+'+sum);ev('cluster-done',pr.lead,ms.length,pr.bots.length,r1(pr.dur));fxCluster(ms,pr.bots.length,pr.bots);}
       else{const q=ms[0];if(!q)continue;popAt(q,'+'+sum);if(q.vir){S.vs.killed++;ev('virus-killed',q.id,pr.bot);fxVirusDone(q);if(![...S.pieces.values()].some(x=>x.vir&&x.awake)){ev('virus-purged');fxSpecial('VIRUS PURGED','purged',q);}}else fxDone(q);}
       if(S.pieces.size===0&&S.time>15&&S.time-(S.lastClean??-99)>20){S.lastClean=S.time;ev('system-clean');fxSpecial('SYSTEM CLEAN','clean');}}}
     virusTick(dt);avTick(dt);
@@ -662,7 +662,7 @@ function comboWord(n){return n>=5?['MEGA DEFRAG!','mega']:n===4?['SUPER COMBO','
 function fxCallout(lines,tier,x,y){const e=fxEl('callout '+tier,x,y);e.innerHTML=lines.map((l,i)=>`<div class="${i?'sub '+(l.cls||''):'main'}">${l.t}</div>`).join('');
   const sc=tier==='mega'?1.3:tier==='super'?1.12:tier==='small'?.8:1;
   e.animate([{transform:`translate(-50%,-50%) scale(${sc*.4})`,opacity:0},{transform:`translate(-50%,-50%) scale(${sc*1.12})`,opacity:1,offset:.2},{transform:`translate(-50%,-60%) scale(${sc})`,opacity:1,offset:.75},{transform:`translate(-50%,-90%) scale(${sc*.96})`,opacity:0}],{duration:tier==='mega'?1900:1500,easing:'ease-out'}).onfinish=()=>e.remove();}
-function fxCluster(ms,nbots=1){sfx('burst');sfx('combo',ms.length);haptic('heavy');
+function fxCluster(ms,nbots=1,botIds=[]){sfx('burst');sfx('combo',ms.length);haptic('heavy');
   const n=ms.length;S.streak=S.time-(S.lastCombo??-99)<=4?(S.streak||1)+1:1;S.lastCombo=S.time;if(S.streak>1)ev('combo-hit',S.streak);if(nbots>=3)ev('overclock',n);
   const [word,tier]=comboWord(n),lines=[{t:word}];if(S.streak>1)lines.push({t:'COMBO HIT ×'+S.streak});if(nbots>=3)lines.push({t:'OVERCLOCK!',cls:'ok'});
   const o=boardXY(),cells=[];for(const p of ms)for(const [x,y] of p.shape)cells.push({x:o.x+(p.ox+x)*cell,y:o.y+(p.oy+y)*cell,col:TYPES[p.type].color});
@@ -671,13 +671,25 @@ function fxCluster(ms,nbots=1){sfx('burst');sfx('combo',ms.length);haptic('heavy
   const cx=cells.reduce((a,c)=>a+c.x,0)/cells.length+cell/2,cy=cells.reduce((a,c)=>a+c.y,0)/cells.length+cell/2;
   const br=board.getBoundingClientRect(),calloutAt=()=>fxCallout(lines,tier,br.left+br.width/2,Math.min(br.bottom-cell*1.2,Math.max(br.top+cell*1.2,cy+cell*1.6)));
   if(REDUCED){calloutAt();fxCoin(cx,cy);return;}
-  if(n<=3){cells.forEach((c,i)=>{const d=i*55,f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
+  // v48 (author, 2026-11-11): every finale from the demo is in the game, each tied to its own event.
+  // Priority: jackpot (7+ files) > chain (COMBO HIT) > teamwork (2–3 robots) > size ladder (5–6 / 4 / 2–3).
+  const mode=n>=7?'B12':S.streak>1?'G':nbots>=2?'V':n>=5?'B2':n===4?'B1':'A';
+  if(L)ev('finale',mode,n,nbots);
+  // memory freed: «+N FREE» pops at (fx,fy), the cluster area sparkles green, then the callout
+  const freeStage=(fx,fy)=>{const blk=fxEl('freeblk',fx,fy);blk.textContent='+'+cells.length+' FREE';haptic('success');
+    blk.animate([{transform:'translate(-50%,-50%) scale(.3)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.3},{transform:'translate(-50%,-50%) scale(1)',offset:.55},{transform:'translate(-50%,-50%) scale(1.06)',offset:.75},{transform:'translate(-50%,-50%) scale(1.6)',opacity:0}],{duration:900}).onfinish=()=>blk.remove();
+    setTimeout(()=>{cells.forEach(c=>{const d=Math.hypot(c.x+cell/2-cx,c.y+cell/2-cy)/cell*60,g=fxEl('freed green',c.x+3,c.y+3,cell-6,cell-6,{borderRadius:'6px',opacity:0});g.animate([{opacity:0},{opacity:.9},{opacity:0}],{duration:600,delay:d}).onfinish=()=>g.remove();});
+      for(let k=0;k<cells.length*2;k++){const q=fxEl('px',fx-3,fy-3,6,6,{background:Math.random()<.4?'#fff':'#9cff6b'});const a=Math.random()*Math.PI*2,sp=cell*(1+Math.random()*2.5);
+        q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp}px)`,opacity:0}],{duration:700}).onfinish=()=>q.remove();}
+      calloutAt();fxCoin(fx,fy);},650);};
+
+  if(mode==='A'){cells.forEach((c,i)=>{const d=i*55,f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
       f.animate([{transform:'scale(1)',background:c.col},{transform:'scale(1)',background:c.col,offset:.01},{transform:'scale(1.18)',background:'#ffd23d',offset:.35},{transform:'scale(0)',background:'#ffd23d',opacity:.7}],{duration:340,delay:d,fill:'backwards'}).onfinish=()=>f.remove();
       for(let j=0;j<4;j++){const a=j*Math.PI/2+.6,sp=fxEl('spark',c.x+cell/2-2.5,c.y+cell/2-2.5);sp.animate([{transform:'rotate(45deg)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${Math.cos(a)*cell*.7}px,${Math.sin(a)*cell*.7}px) rotate(45deg)`,opacity:0}],{duration:380,delay:d+120,fill:'backwards'}).onfinish=()=>sp.remove();}
       setTimeout(()=>sfx('tick',Math.min(i,7)),d+110);});
     const end=cells.length*55+260;cells.forEach(c=>{const g=fxEl('freed',c.x+3,c.y+3,cell-6,cell-6,{borderRadius:'6px',opacity:0});g.animate([{opacity:0},{opacity:.8},{opacity:0}],{duration:500,delay:end}).onfinish=()=>g.remove();});
     setTimeout(()=>{calloutAt();fxCoin(cx,cy);},end);return;}
-  if(n===4){// defrag bar to 100%
+  if(mode==='B1'||mode==='B12'){// defrag bar to 100% (B12: then it bursts into «+N FREE»)
     const m=cells.length,bw=Math.min(br.width-24,m*cell*.75),sw=bw/m,bx=Math.min(br.right-bw-12,Math.max(br.left+12,cx-bw/2)),by=Math.min(br.bottom-sw-30,Math.max(br.top+30,cy-sw/2));
     const frame=fxEl('dbar',bx-5,by-5,bw+10,sw+10);frame.animate([{opacity:0},{opacity:1}],{duration:200,delay:300,fill:'backwards'});
     const pct=fxEl('dpct',bx+bw/2,by-8);pct.textContent='0%';
@@ -690,16 +702,32 @@ function fxCluster(ms,nbots=1){sfx('burst');sfx('combo',ms.length);haptic('heavy
     setTimeout(()=>{frame.animate([{opacity:1,background:'rgba(255,255,255,.6)'},{opacity:0}],{duration:300}).onfinish=()=>{frame.remove();pct.remove();};
       for(let k=0;k<m*3;k++){const q=fxEl('px',bx+Math.random()*bw,by+sw/2,5,5,{background:Math.random()<.25?'#fff':'#ffd23d'});const a=Math.random()*Math.PI*2,sp=cell*(.8+Math.random()*1.6);
         q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp+cell}px)`,opacity:0}],{duration:600}).onfinish=()=>q.remove();}
-      calloutAt();fxCoin(bx+bw/2,by);},1260);return;}
-  // ×5+: memory freed — cells collapse into «+N FREE», it pops, the freed area sparkles
+      if(mode==='B12'){sfx('burst');freeStage(bx+bw/2,by+sw/2);}else{calloutAt();fxCoin(bx+bw/2,by);}},1260);return;}
+  if(mode==='B2'){// ×5–6: memory freed — cells collapse into «+N FREE», it pops, the freed area sparkles
   cells.forEach(c=>{const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
     f.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${cx-cell/2-c.x}px,${cy-cell/2-c.y}px) scale(.45)`,background:'#bff5e4'}],{duration:420,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();});
-  setTimeout(()=>{const blk=fxEl('freeblk',cx,cy);blk.textContent='+'+cells.length+' FREE';haptic('success');
-    blk.animate([{transform:'translate(-50%,-50%) scale(.3)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.3},{transform:'translate(-50%,-50%) scale(1)',offset:.55},{transform:'translate(-50%,-50%) scale(1.06)',offset:.75},{transform:'translate(-50%,-50%) scale(1.6)',opacity:0}],{duration:900}).onfinish=()=>blk.remove();
-    setTimeout(()=>{cells.forEach(c=>{const d=Math.hypot(c.x+cell/2-cx,c.y+cell/2-cy)/cell*60,g=fxEl('freed green',c.x+3,c.y+3,cell-6,cell-6,{borderRadius:'6px',opacity:0});g.animate([{opacity:0},{opacity:.9},{opacity:0}],{duration:600,delay:d}).onfinish=()=>g.remove();});
-      for(let k=0;k<cells.length*2;k++){const q=fxEl('px',cx-3,cy-3,6,6,{background:Math.random()<.4?'#fff':'#9cff6b'});const a=Math.random()*Math.PI*2,sp=cell*(1+Math.random()*2.5);
-        q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp}px)`,opacity:0}],{duration:700}).onfinish=()=>q.remove();}
-      calloutAt();fxCoin(cx,cy);},650);},420);}
+  setTimeout(()=>freeStage(cx,cy),420);}
+  if(mode==='V'){// robots eat: the cells stream as bits into the robots that worked on the cluster
+    const tg=(botIds.length?botIds:[1]).map(id=>robotsEl.querySelector(`[data-bot="${id}"]`)).filter(Boolean).map(el=>{const r=el.getBoundingClientRect();return {el,x:r.left+r.width/2,y:r.top+r.height*.4};});
+    if(!tg.length){calloutAt();fxCoin(cx,cy);return;}
+    cells.forEach((c,i)=>{const t=tg[i%tg.length],d=i*45,dx=t.x-(c.x+cell/2),dy=t.y-(c.y+cell/2);
+      const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
+      f.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate(0,0) scale(.55)',offset:.25},{transform:`translate(${dx}px,${dy}px) scale(.18)`,opacity:.9}],{duration:520,delay:d,easing:'cubic-bezier(.5,0,.8,.6)',fill:'backwards'}).onfinish=()=>f.remove();
+      for(let k=0;k<3;k++){const q=fxEl('px',c.x+cell/2-2.5,c.y+cell/2-2.5,5,5,{background:k?c.col:'#fff'});
+        q.animate([{transform:'translate(0,0)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${dx}px,${dy}px)`,opacity:.2}],{duration:520,delay:d+60+k*70,easing:'cubic-bezier(.5,0,.8,.6)',fill:'backwards'}).onfinish=()=>q.remove();}
+      setTimeout(()=>{sfx('tick',Math.min(i,7));t.el.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:180});},d+520);});
+    setTimeout(()=>{for(const t of tg){const g=fxEl('ring',t.x-14,t.y-14,28,28,{borderColor:'#9cff6b'});g.animate([{transform:'scale(.5)',opacity:1},{transform:'scale(2.4)',opacity:0}],{duration:450}).onfinish=()=>g.remove();}haptic('success');calloutAt();fxCoin(cx,cy);},cells.length*45+560);return;}
+  if(mode==='G'){// shock wave: flash, pixel burst, a ring across the board, a short shake — stronger for bigger clusters
+    cells.forEach(c=>{const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px',boxShadow:'0 0 18px #fff'});
+      f.animate([{transform:'scale(1)',background:c.col},{transform:'scale(1.12)',background:'#fff',offset:.4},{transform:'scale(0)',background:'#fff'}],{duration:260}).onfinish=()=>f.remove();
+      for(let k=0;k<4;k++){const q=fxEl('px',c.x+cell/2-3,c.y+cell/2-3,6,6,{background:k%2?c.col:'#fff'});const a=Math.random()*Math.PI*2,sp=cell*(1.2+Math.random()*2.4);
+        q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp}px)`,opacity:0}],{duration:620,delay:120,fill:'backwards'}).onfinish=()=>q.remove();}});
+    const fl=fxEl('',br.left,br.top,br.width,br.height,{position:'absolute',background:'#fff',borderRadius:'14px',opacity:0});fl.animate([{opacity:0},{opacity:.4,offset:.15},{opacity:0}],{duration:380}).onfinish=()=>fl.remove();
+    const R=Math.hypot(br.width,br.height);for(let k=0;k<2;k++){const g=fxEl('ring',cx-20,cy-20,40,40,{borderColor:k?'#ffd23d':'#fff'});
+      g.animate([{transform:'scale(.3)',opacity:1},{transform:`scale(${R/40})`,opacity:0}],{duration:650,delay:100+k*110,easing:'ease-out',fill:'backwards'}).onfinish=()=>g.remove();}
+    const amp=Math.min(9,3+n*1.2);board.animate([{transform:'translate(0,0)'},{transform:`translate(${-amp}px,${amp*.4}px)`},{transform:`translate(${amp*.8}px,${-amp*.5}px)`},{transform:`translate(${-amp*.5}px,${amp*.3}px)`},{transform:'translate(0,0)'}],{duration:340,delay:80});
+    setTimeout(()=>{calloutAt();fxCoin(cx,cy);},420);return;}
+}
 function fxSpecial(text,kind,p){const br=board.getBoundingClientRect();let x=br.left+br.width/2,y=br.top+br.height*.42;
   if(p){const o=boardXY();x=o.x+(p.ox+.5)*cell;y=Math.max(br.top+cell,o.y+(p.oy-.5)*cell);}
   sfx(kind==='clean'?'win':'buy');haptic('success');if(REDUCED)return;fxCallout([{t:text}],kind==='clean'?'mega':'small '+kind,x,y);
@@ -871,12 +899,12 @@ const SLOW_CAP0=3, SLOW_REFILL=1/5, SLOW_UP_S=2, SLOW_UP_COST=15, SLOW_UP_MAX=3;
 const slowBtn=$('slowBtn'),slowUp=$('slowUp');
 function slowTick(rdt){if(S.slowOn){S.slowRes=Math.max(0,S.slowRes-rdt);S.slowUsed=(S.slowUsed||0)+rdt;if(S.slowRes<=0){S.slowOn=false;ev('slow-off',0,'empty');sfx('slowOut');}}
   else S.slowRes=Math.min(S.slowCap,S.slowRes+rdt*SLOW_REFILL);}
-slowBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(S?.state!=='play')return;
+slowBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();lastDown='';if(S?.state!=='play')return;
   if(S.slowOn){S.slowOn=false;ev('slow-off',r1(S.slowRes),'tap');sfx('slowOut');haptic('soft');}
   else if(S.slowRes>=.2){S.slowOn=true;S.slowStarts=(S.slowStarts||0)+1;ev('slow-on',r1(S.slowRes),!!S.over);sfx('slowIn');haptic('soft');}
   else{sfx('bad');haptic('tick');ev('slow-empty');}
   renderSlowBtn();});
-slowUp.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(S?.state!=='play'||S.slowUps>=SLOW_UP_MAX)return;
+slowUp.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();lastDown='';if(S?.state!=='play'||S.slowUps>=SLOW_UP_MAX)return;
   if(S.credits<SLOW_UP_COST){sfx('bad');haptic('tick');ev('slow-up-poor',S.credits);return;}
   S.credits-=SLOW_UP_COST;S.spent+=SLOW_UP_COST;S.slowUps++;S.slowCap+=SLOW_UP_S;S.slowRes+=SLOW_UP_S;ev('slow-up',S.slowUps,S.credits);sfx('buy');haptic('success');renderSlowBtn();});
 for(const b of [slowBtn,slowUp]){b.addEventListener('click',e=>e.preventDefault());}
