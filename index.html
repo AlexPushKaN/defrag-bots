@@ -1,0 +1,1004 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#262a9e">
+<script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<title>Defrag Bots: The Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=JetBrains+Mono:wght@700&display=swap">
+<style>
+/* Layout: one phone screen — status bar, intake tray, memory board, action bar. Committed single look (toy factory). */
+:root{
+  --bg-top:#4357f0; --bg-bottom:#262a9e; --ink:#14123a; --cream:#fff7e6; --well:#1b1857; --line:#3a44b8;
+  --vir:#ff3d7f; --av:#9cff6b; --tmp:#ff8a3d; --doc:#4d9bff; --raw:#b07bff; --png:#38e0b8; --gold:#ffd23d; --danger:#ff5a5a; --muted:#c9d0ff;
+  --display:"Rubik",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));background-color:var(--bg-bottom);color:#fff;font-family:var(--display);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app{height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:480px;margin:0 auto}
+.bar{display:flex;align-items:center;gap:8px}
+.chip{display:flex;flex-direction:column;line-height:1;padding:6px 10px;border-radius:14px;background:var(--cream);color:var(--ink);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+.chip small{font-size:10px;font-weight:800;letter-spacing:.06em;opacity:.7}
+.chip b{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;margin-top:3px}
+.chip.gold{background:var(--gold)}
+.chip.slow{background:var(--muted)}
+#board.slow{box-shadow:0 0 0 3px var(--muted),0 4px 0 var(--ink)}
+.chip.pause{width:48px;align-items:center;justify-content:center;cursor:pointer;padding:0;font:inherit}
+.chip.pause span{width:14px;height:18px;border-left:5px solid var(--ink);border-right:5px solid var(--ink);box-sizing:border-box}
+.chip.pause:disabled{opacity:.5;cursor:default}
+.title{flex:1;min-width:0}
+.title h1{margin:0;font-size:clamp(14px,4.2vw,18px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900;text-shadow:0 2px 0 var(--ink);text-wrap:balance}
+.title p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700}
+#app{position:relative}
+#tray{flex-wrap:wrap;row-gap:8px;align-content:flex-start}
+#trayRow2{flex:0 0 100%;display:flex;gap:8px;align-items:stretch;height:50px}
+#slowWrap{flex:0 0 122px;position:relative;display:flex}
+#slowBtn{flex:1;width:100%;min-height:0;height:100%;padding:0 8px;border-radius:12px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px;font-size:13px;line-height:1.05;text-align:left;position:relative;overflow:visible;
+  background:var(--ink);color:#7ff3ff;border:3px solid #7ff3ff;box-shadow:0 0 0 2px var(--ink),0 0 14px 2px rgba(127,243,255,.6),inset 0 0 10px rgba(127,243,255,.3);touch-action:none;transition:opacity .2s,filter .2s}
+#slowBtn small{display:block;font-size:10.5px;font-weight:800;color:#c9f9ff;opacity:.85}
+#slowUp{position:absolute;right:-6px;top:-20px;min-height:0;height:24px;padding:0 7px;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:9px;font-family:var(--mono);font-size:11.5px;font-weight:700;line-height:20px;box-shadow:0 2px 0 var(--ink);white-space:nowrap;z-index:2;touch-action:none}
+#slowUp.poor{background:#9aa3d6;opacity:.85}
+#slowUp[hidden]{display:none}
+#slowBtn #slowFill{position:absolute;left:3px;bottom:3px;height:4px;width:0;border-radius:3px;background:currentColor;transition:width .15s linear}
+#slowBtn.calm{opacity:.55;filter:saturate(.6);box-shadow:0 0 0 2px var(--ink)}
+#slowBtn.hot{animation:slowhot .9s ease-in-out infinite}
+@keyframes slowhot{50%{box-shadow:0 0 0 2px var(--ink),0 0 26px 6px rgba(127,243,255,.95),inset 0 0 14px rgba(127,243,255,.5);transform:scale(1.04)}}
+#slowBtn.act{background:#7ff3ff;color:var(--ink);border-color:var(--ink);box-shadow:0 0 18px 4px rgba(127,243,255,.8)}
+#slowBtn.act small{color:var(--ink)}
+#slowBtn.empty{background:#3a3f66;color:#9aa3d6;border-color:#9aa3d6;box-shadow:0 0 0 2px var(--ink);opacity:.85}
+body.slowmo::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(127,243,255,.28));z-index:30}
+@media (prefers-reduced-motion:reduce){#slowBtn.hot{animation:none}}
+#lane{flex:1;min-width:0;position:relative;border-radius:12px;border:2px dashed rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
+#laneHint{color:var(--muted);font-size:11px;font-weight:800;opacity:.7}
+#lane:has(#alarm:not([hidden])){border-color:transparent}
+#lane:has(#alarm:not([hidden])) #laneHint{display:none}
+#lane #alarm{position:absolute;inset:-2px;z-index:2}
+#alarm{height:100%;box-sizing:border-box;padding:3px 10px 4px;border-radius:12px;background:var(--danger);color:#fff;border:3px solid var(--ink);display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:center;font-weight:900;font-size:12px;line-height:1;animation:alarm .6s ease-in-out infinite alternate}
+#alarm[hidden]{display:none}
+#alarm.refill{background:#24206b;color:var(--muted);animation:none}
+#alarm.refill i{background:var(--muted)}
+#outl{position:absolute;left:0;top:0;pointer-events:none;z-index:4;opacity:0;overflow:visible}
+#outl path{fill:none;stroke:#fff7e6;stroke-width:2;stroke-linecap:square}
+#outl.hold{opacity:.5;transition:opacity .25s}
+#outl.flash{animation:oflash 1.4s ease-out forwards}
+@keyframes oflash{0%{opacity:0}25%{opacity:.55}50%{opacity:.55}100%{opacity:0}}
+#alarm b{font-family:var(--mono);font-size:15px}
+#alarm div{grid-column:1/-1;height:6px;border-radius:6px;background:rgba(20,18,58,.45);overflow:hidden}
+#alarm i{display:block;height:100%;width:100%;background:#fff}
+@keyframes alarm{to{box-shadow:0 0 0 5px rgba(255,90,90,.45)}}
+#tray{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:16px;background:var(--well);border:3px solid var(--ink);min-height:96px;box-sizing:border-box;touch-action:none}
+#tray.warn{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger)}
+#current{flex:0 0 auto;display:flex;gap:6px;position:relative;padding-bottom:12px}
+.coarse #current::after{content:"поворот: тап · в руке — кнопка ⟳"}
+#current::after{content:"повернуть: клик · R · пробел";position:absolute;bottom:-2px;left:0;right:0;text-align:center;font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.04em}
+.slot{position:relative;width:76px;height:76px;border-radius:12px;background:#24206b;cursor:grab}
+.slot.empty{background:transparent;border:2px dashed var(--line);box-sizing:border-box;cursor:default}
+.slot.lifted .piece{opacity:.25}
+.slot.hover{box-shadow:0 0 0 2px var(--gold)}
+#next{flex:1;display:flex;gap:5px;align-items:center;min-width:0;overflow:hidden;flex-wrap:wrap}
+#next .mini{flex:0 0 auto;opacity:.85}
+#qcount{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--muted);text-align:right;line-height:1.3}
+#qcount b{display:block;font-family:var(--mono);font-size:18px;color:#fff}
+#qcount small{display:block;font-size:10px}
+#qbar{width:58px;height:8px;border-radius:5px;background:#24206b;border:2px solid var(--ink);margin:3px 0 2px auto;overflow:hidden}
+#qbar i{display:block;height:100%;width:0;background:var(--png);transition:width .2s}
+#tray.warn #qcount b{color:var(--danger)}
+#boardWrap{flex:1;min-height:0;display:grid;place-items:center}
+#board{position:relative;border-radius:12px;border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);background-color:var(--well);touch-action:none;overflow:hidden}
+.cell{position:absolute;box-sizing:border-box;border:2.5px solid var(--ink);border-radius:7px;display:grid;place-items:center;font-weight:900;font-size:10px;color:var(--ink)}
+.piece{position:absolute;inset:0;pointer-events:none}
+.piece .cell{pointer-events:auto;cursor:grab}
+.piece.busy .cell{cursor:default;animation:work 1s ease-in-out infinite}
+@keyframes work{50%{filter:brightness(1.15)}}
+.badge{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--cream);border:2.5px solid var(--ink);box-sizing:border-box;display:grid;place-items:center;font-size:12px;z-index:2;pointer-events:none}
+.ring{position:absolute;border-radius:50%;z-index:1;pointer-events:none}
+.ring.boost{animation:ringboost .65s ease-out}
+@keyframes ringboost{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.9)}40%{transform:scale(1.35);box-shadow:0 0 0 6px rgba(255,255,255,.35)}100%{transform:scale(1);box-shadow:0 0 0 10px rgba(255,255,255,0)}}
+.ghost .cell{opacity:.55;border-style:dashed}
+.ghost.bad .cell{background:var(--danger)!important}
+.piece.float{position:fixed;inset:auto;pointer-events:none;z-index:50;opacity:.9}
+.ghost .cell,.float .cell{pointer-events:none!important}
+.ghost.flash .cell{animation:flash .35s ease-out}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+#trash{display:flex;align-items:center;justify-content:center;background:var(--tmp)}
+#trash.over{background:var(--danger);transform:scale(1.04)}
+#trash small{font-size:11px;font-weight:800;opacity:.8}
+.pop{position:absolute;font-weight:900;font-family:var(--mono);color:var(--gold);text-shadow:0 2px 0 var(--ink);pointer-events:none;z-index:5;animation:pop 0.9s ease-out forwards}
+@keyframes pop{to{transform:translateY(-30px);opacity:0}}
+.actions{display:flex;gap:8px;align-items:stretch}
+#robots{display:flex;gap:6px;flex:1;min-width:0;touch-action:none}
+.rcard{flex:1;min-width:0;min-height:58px;padding:4px 6px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;line-height:1.1;position:relative;overflow:hidden}
+.rcard .rname{font-weight:900;font-size:12px}
+.rcard .rpref{font-weight:900;font-size:11px;padding:1px 6px;border-radius:6px;border:2px solid var(--ink);background:var(--cream)}
+.rcard .rbar{position:absolute;left:0;bottom:0;height:4px;background:var(--ink);opacity:.55}
+.rcard.buy{background:transparent;color:#fff;border-style:dashed;border-color:var(--muted);box-shadow:none}
+.rcard.buy.ready{background:var(--gold);color:var(--ink);border-style:solid;border-color:var(--ink);box-shadow:0 3px 0 var(--ink);animation:ready 1s ease-in-out infinite}
+@keyframes ready{50%{transform:scale(1.05)}}
+.rcard.buy.ready{position:relative;animation:ready 1s ease-in-out infinite,glow 1s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 3px 0 var(--ink),0 0 0 5px rgba(255,200,40,.55),0 0 18px 6px rgba(255,200,40,.6)}}
+.rcard.buy.nag{overflow:visible;animation:nag .7s ease-in-out infinite,glow .7s ease-in-out infinite}
+@keyframes nag{0%,100%{transform:scale(1)}30%{transform:scale(1.14) rotate(-3deg)}60%{transform:scale(1.08) rotate(3deg)}}
+.rcard.buy .nagtip{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:900;white-space:nowrap;pointer-events:none}
+#trash{flex:0 0 96px;min-height:0;height:100%;flex-direction:row;gap:6px;padding:4px 8px;font-size:14px}
+#trash small{white-space:nowrap}
+.actions .rcard{padding:4px 3px;min-height:86px}.actions .rcard .rname{white-space:nowrap}
+.actions{border-radius:16px;transition:outline-color .1s}
+.actions.zone{outline:3px dashed var(--gold);outline-offset:4px}
+#rotBtn{flex:0 0 auto;width:98px;min-height:86px;padding:0;font-size:52px;line-height:1;background:var(--gold);touch-action:none;-webkit-user-select:none;user-select:none}
+#rotBtn.idle{background:var(--cream);opacity:.75}
+#rotBtn.hit{transform:translateY(2px) scale(.96);box-shadow:0 1px 0 var(--ink)}
+html.lefty .actions{flex-direction:row-reverse}
+html.lefty #robots{flex-direction:row-reverse}
+#dialog .hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 4px}
+#dialog .hand button{min-height:40px;padding:6px 12px;font-size:14px}
+#dialog .hand button.on{background:var(--gold)}
+button{font-family:var(--display);font-weight:900;font-size:15px;border:3px solid var(--ink);border-radius:14px;padding:10px 14px;min-height:46px;cursor:pointer;color:var(--ink);background:var(--cream);box-shadow:0 3px 0 var(--ink)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button.primary{background:var(--gold)}
+#hint{flex:1;font-size:12px;color:var(--muted);font-weight:700;line-height:1.35}
+#overlay{position:fixed;inset:0;display:flex;overflow-y:auto;padding-block:16px;box-sizing:border-box;background:rgba(20,18,58,.72);z-index:100;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{margin:auto;background:var(--cream);color:var(--ink);border:3px solid var(--ink);box-shadow:0 5px 0 var(--ink);border-radius:20px;padding:20px;max-width:360px;display:flex;flex-direction:column;gap:12px}
+.card h2{margin:0;font-size:24px;font-weight:900;text-wrap:balance}
+.card p,.card li{margin:0;font-size:13.5px;line-height:1.45;font-weight:500}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.legend span{font-size:11px;font-weight:900;padding:3px 8px;border-radius:8px;border:2px solid var(--ink)}
+.stat{font-family:var(--mono);font-size:28px;font-weight:700}
+#fan{position:fixed;inset:0;z-index:90;pointer-events:none}
+#fx{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+#fx .bit{position:absolute;font-family:var(--mono);font-size:11px;font-weight:700;color:#bfe0ff;text-shadow:0 0 6px #4d9bff,0 1px 0 var(--ink)}
+#fx .fxcell{position:absolute;box-sizing:border-box;border:2.5px solid var(--ink)}
+#fx .spark{position:absolute;width:5px;height:5px;background:#fff;transform:rotate(45deg)}
+#fx .freed{position:absolute;box-sizing:border-box;border:2px solid #fff;box-shadow:0 0 10px #fff}
+#fx .px{position:absolute;box-sizing:border-box;border:1.5px solid var(--ink)}
+#fx .ring{position:absolute;border-radius:50%;border:4px solid}
+#fxTop{position:fixed;inset:0;z-index:150;pointer-events:none;overflow:hidden}
+#fxTop .conf{position:absolute;border:1.5px solid var(--ink);box-sizing:border-box}
+#lane .threat{position:absolute;inset:-2px;border-radius:12px;border:3px solid var(--ink);background:var(--vir);color:#fff;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:0 10px;font-weight:900;font-size:14px;box-shadow:0 0 16px rgba(255,61,127,.55);animation:threat 1.6s ease-in-out infinite}
+#lane .threat b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+#lane .threat .ic{width:24px;height:24px;background:#fff;border-radius:50%;padding:2px;border:2px solid var(--ink);box-sizing:border-box}
+@keyframes threat{50%{box-shadow:0 0 26px rgba(255,61,127,.85)}}
+#lane .threat.live{animation-duration:.8s}
+#lane:has(.threat:not([hidden])) #laneHint{display:none}
+.slot .sbadge{position:absolute;right:-5px;top:-5px;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--ink);display:grid;place-items:center;font-weight:900;font-size:12px;z-index:3;box-sizing:border-box;pointer-events:none}
+.slot .sbadge.ok{background:var(--av);color:var(--ink)}.slot .sbadge.q{background:#c9d0ff;color:var(--ink)}
+.slot .scanbeam{position:absolute;left:5px;right:5px;height:3px;background:var(--av);box-shadow:0 0 10px var(--av);border-radius:2px;z-index:3;pointer-events:none;animation:beam .9s ease-in-out infinite alternate}
+@keyframes beam{from{top:12%}to{top:84%}}
+.slot.scanning{box-shadow:0 0 0 3px var(--av)}
+.rcard.av{background:#2a2f4f!important;color:#fff}
+.rcard .rstate{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.rcard.avnag{overflow:visible;animation:nag .8s ease-in-out infinite}
+.rcard.avnag .nagtip{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--av);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:900;white-space:nowrap;pointer-events:none}.rcard.av .rpref{background:var(--av);color:var(--ink)}.rcard.av .rbar{background:var(--av);opacity:1}
+.piece.virus .cell{background-color:var(--vir)!important;background-image:repeating-linear-gradient(45deg,rgba(20,18,58,.28) 0 4px,transparent 4px 8px)!important;color:transparent!important;box-shadow:0 0 12px rgba(255,61,127,.75);animation:vjit .5s steps(2) infinite}
+@keyframes vjit{50%{transform:translate(.8px,-.6px)}}
+.piece.infected .cell{border-color:var(--vir)!important;box-shadow:0 0 8px rgba(255,61,127,.55)}
+.piece.infected .cell::after{content:"";position:absolute;inset:2px;border-radius:4px;pointer-events:none;background:rgba(40,8,40,.18) url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='33'%3E%3Cg%20font-family='monospace'%20font-weight='700'%20font-size='9'%20fill='%23ff78aa'%20text-anchor='middle'%3E%3Ctext%20x='5'%20y='9'%3E1%3C/text%3E%3Ctext%20x='15'%20y='14'%3E0%3C/text%3E%3Ctext%20x='25'%20y='7'%3E1%3C/text%3E%3Ctext%20x='5'%20y='20'%3E0%3C/text%3E%3Ctext%20x='15'%20y='25'%3E1%3C/text%3E%3Ctext%20x='25'%20y='18'%3E0%3C/text%3E%3Ctext%20x='5'%20y='31'%3E1%3C/text%3E%3Ctext%20x='25'%20y='29'%3E1%3C/text%3E%3C/g%3E%3C/svg%3E") 0 0/30px 33px repeat;opacity:.8;animation:bitsrun 1.8s linear infinite}
+@keyframes bitsrun{to{background-position:0 33px}}
+@media (prefers-reduced-motion:reduce){.piece.infected .cell::after{animation:none}}
+.piece.clu .cell{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),0 0 10px rgba(255,255,255,.35)}
+.clutag{position:absolute;z-index:5;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:0 5px;font-family:var(--mono);font-size:11px;font-weight:700;line-height:16px;pointer-events:none;white-space:nowrap}
+#fx .callout{position:absolute;text-align:center;pointer-events:none;white-space:nowrap;line-height:1.05}
+#fx .callout .main{font-weight:900;font-size:26px;color:var(--gold);-webkit-text-stroke:2px var(--ink);text-shadow:0 3px 0 var(--ink)}
+#fx .callout.mega .main{font-size:30px;background:linear-gradient(90deg,#ff8a3d,#ffd23d,#38e0b8,#4d9bff,#b07bff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px var(--ink);filter:drop-shadow(0 3px 0 var(--ink))}
+#fx .callout .sub{font-weight:900;font-size:14px;color:#fff;-webkit-text-stroke:1.5px var(--ink);margin-top:3px}
+#fx .callout .sub.ok{color:var(--av)}
+#fx .callout.purged .main{color:var(--av);font-size:20px}
+#fx .dbar{position:absolute;border:3px solid var(--cream);border-radius:7px;background:rgba(18,15,69,.85);box-sizing:border-box}
+#fx .dpct{position:absolute;transform:translate(-50%,-100%);font-family:var(--mono);font-weight:700;font-size:15px;color:#fff;-webkit-text-stroke:1.5px var(--ink)}
+#fx .dpct.done{color:var(--av)}
+#fx .freeblk{position:absolute;padding:6px 12px;border-radius:10px;background:var(--av);color:var(--ink);border:3px solid var(--ink);font-family:var(--mono);font-weight:700;font-size:20px;white-space:nowrap;box-shadow:0 0 24px rgba(156,255,107,.8)}
+#fx .freed.green{border-color:#bfffd0;box-shadow:0 0 12px var(--av)}
+#fx .cleanglow{position:absolute;border-radius:12px;box-shadow:inset 0 0 40px 10px rgba(156,255,107,.7)}
+#fx .combo{position:absolute;font-weight:900;font-size:26px;color:var(--gold);-webkit-text-stroke:2px var(--ink);text-shadow:0 3px 0 var(--ink);white-space:nowrap;pointer-events:none}
+.susb{position:absolute;width:20px;height:20px;border-radius:50%;background:#c9d0ff;color:var(--ink);border:2.5px solid var(--ink);box-sizing:border-box;display:grid;place-items:center;font-weight:900;font-size:11px;z-index:4;pointer-events:none}
+.bugb{position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--ink);padding:2px;box-sizing:border-box;z-index:4;pointer-events:none}
+#fx .vbit{position:absolute;font-family:var(--mono);font-size:12px;font-weight:700;color:#ff9cbf;text-shadow:0 0 6px var(--vir),0 1px 0 var(--ink)}
+@media (prefers-reduced-motion:reduce){.piece.virus .cell,#lane .threat,.slot .scanbeam{animation:none}}
+#fx .coin{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:var(--gold);border:2.5px solid var(--ink);box-sizing:border-box;box-shadow:0 0 12px rgba(255,210,61,.8)}
+#fan .fanopt{position:absolute;width:54px;height:54px;min-height:0;padding:0;margin:-27px 0 0 -27px;border-radius:50%;font-size:11px;font-weight:900;pointer-events:auto;transition:transform .08s;animation:fanin .12s ease-out}
+#fan .fanopt.cur{box-shadow:0 0 0 3px var(--gold),0 3px 0 var(--ink)}
+#fan .fanopt.hot{transform:scale(1.22)}
+#fan .fanhub{position:absolute;transform:translate(-50%,-100%);font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 0 var(--ink);white-space:nowrap}
+@keyframes fanin{from{transform:scale(.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){#alarm{animation:none}#outl.flash{animation:none;opacity:.45}.piece.busy .cell,.pop,.rcard.buy.ready,.rcard.buy.nag{animation:none}}
+#saveNote{font-size:12px;font-weight:700;opacity:.75}
+.card textarea{font:500 14px/1.4 var(--display);border:2.5px solid var(--ink);border-radius:12px;padding:8px 10px;min-height:56px;resize:vertical;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+.row{display:flex;gap:8px}.row button{flex:1}
+@media (max-width:380px){.slot{width:68px;height:68px}}
+</style>
+
+<div id="app">
+  <div class="bar">
+    <div class="title"><h1>Дефрагментатор</h1><p id="status">Прототип · смена 2 минуты</p></div>
+    <button class="chip pause" id="pauseBtn" aria-label="Пауза (клавиша P или Esc)" title="Пауза · P / Esc"><span aria-hidden="true"></span></button>
+    <div class="chip" id="timeChip"><small id="timeLbl">ВРЕМЯ</small><b id="time">2:00</b></div>
+    <div class="chip gold"><small>КРЕДИТЫ</small><b id="credits">0</b></div>
+  </div>
+  <div id="tray" aria-label="Вход: три файла на выбор">
+    <div id="current"><div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div></div>
+    <div id="next" aria-label="Ждут своей очереди"></div>
+    <div id="qcount">вход<b id="qn">0/24</b><div id="qbar" aria-hidden="true"><i></i></div><small>клеток</small></div>
+    <div id="trayRow2"><div id="lane"><span id="laneHint">вход в норме</span><div id="alarm" hidden role="alert"><span>Вход переполнен — освободите место</span><b>10,0 с</b><div><i></i></div></div></div><div id="slowWrap"><button id="slowBtn" type="button" aria-label="Замедлить игру вдвое: нажмите, чтобы включить или выключить"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 2h10M5 18h10M6 2c0 5 8 5 8 8s-8 3-8 8M14 2c0 5-8 5-8 8s8 3 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 6h4l-2 3zM7.5 16.5h5L10 13z" fill="currentColor"/></svg><span id="slowTxt">Замедлить<small>3,0 / 3 с</small></span><i id="slowFill"></i></button><button id="slowUp" type="button" aria-label="Увеличить запас замедления на 2 секунды за 15 кредитов">+2 с · 15 кр.</button></div></div>
+  </div>
+  <div id="boardWrap"><div id="board" aria-label="Память 8 на 10 ячеек"></div></div>
+  <div class="actions">
+    <button id="rotBtn" aria-label="Повернуть файл в руке (нажимайте, пока другая рука несёт файл)"><span aria-hidden="true">⟳</span></button>
+    <div id="robots" aria-label="Роботы: нажмите на робота, чтобы выбрать его любимый тип файлов"></div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="card" id="dialog">
+    <h2>Дефрагментатор</h2>
+    <ul>
+      <li>На входе <b>три файла на выбор</b>. Ставьте в любом порядке: <b>перетащите</b> файл в память. <b>Тап (клик) по файлу поворачивает его.</b> На телефоне играйте двумя руками: одна несёт файл, большой палец другой жмёт <b>⟳</b> внизу — файл в руке поворачивается на 90° по часовой вокруг своего центра, прямо во время переноса. Пока файл в руке, поворачивает касание в любом месте нижней полосы. Левша? Переключите сторону в паузе. На Mac ещё: правый клик, клавиша <b>R</b> или <b>пробел</b> — и прямо во время переноса.</li>
+      <li>Роботы забирают файлы по очереди (самые старые первыми) и платят кредиты. На старте робот один — докупайте ещё (30 и 50 кредитов).</li>
+      <li><b>Специализация:</b> зажмите робота внизу — всплывёт веер типов; ведите палец к нужному и отпустите (или нажмите и выберите тапом). Специалист берёт свои файлы первыми и обрабатывает их на 20% быстрее, а чужие — на 20% медленнее. «Любые» — без бонусов и штрафов. Если переключить робота на тип файла, который он уже обрабатывает, остаток работы сразу пойдёт быстрее; переключение на другой тип текущую работу не замедляет.</li>
+      <li>Чтобы различать файлы одного цвета: если пару секунд ничего не делать, контуры всех файлов коротко вспыхнут; во время переноса контуры видны всё время.</li>
+      <li>Время обработки = клетки × скорость типа (см. ниже): мелочь уходит быстро, крупный RAW держит робота долго. Цвет — тип файла. Крупным RAW нужен сплошной кусок: укладывайте плотно и переставляйте лежащие файлы.</li>
+      <li><b>Управление в замедлении:</b> пока вы двигаете файл, который уже лежит в памяти, или выбираете тип робота в веере, вся игра идёт вдвое медленнее — но только первые 3 секунды.</li>
+      <li><b>Замедлить</b> (кнопка с песочными часами в панели входа) — запас времени: нажмите, и игра идёт вдвое медленнее (запас переполнения тоже), нажмите ещё раз — остановится, остаток сохранится. Запас (3 с) восполняется сам, пока замедление выключено. Жёлтая кнопка «+2 с · 15 кр.» увеличивает запас до конца смены (до трёх раз).</li>
+      <li><b>Кластеры.</b> Два и больше файла одного типа, касающиеся сторонами, — кластер (белая обводка и «×N»). Он уходит в работу целиком, когда подходит очередь его самого старого файла, обрабатывается на 15% быстрее, но держит всю свою память до конца. Свободные роботы со специализацией на этот тип подключаются к кластеру: двое — ×1,8, трое — ×2,5. Файл, приложенный к кластеру уже в работе, ждёт своей очереди.</li>
+      <li><b>Вирусы.</b> Когда горит «Угроза: в потоке вирус», среди входящих файлов прячутся вирусы — снаружи как обычные. В памяти вирус просыпается в случайный момент (через 5–30 с) или сразу, когда до него доберётся обычный робот. Файлы, пришедшие во время угрозы и не проверенные AV, помечены «?» — какой из них вирус, неизвестно и раз в 5 с заражает соседа по стороне; заражённые тоже заражают дальше. Пустая клетка останавливает цепочку. Заражённые файлы обрабатываются вдвое дольше и не приносят кредитов. <b>Уничтожить вирус может только робот AV</b> (зажмите робота → AV): он проверяет файлы с «?» на входе (≈1 с на файл, ✓ — чисто, вирус удаляет прямо в очереди), а проснувшиеся вирусы в памяти удаляет всегда (+3 кр. за вирус). AV стоит 1 кредит каждые 2 с, пока включён, и без угрозы простаивает — не забудьте вернуть робота.</li>
+      <li>Вход вмещает <b>24 клетки</b> (шкала справа): большие файлы занимают больше места. Переполнился — загорится красная шкала: запас 10 секунд, чтобы освободить вход, иначе смена проиграна. Запас восстанавливается медленно (1 с за 2 с), так что частые переполнения складываются. Продержитесь 2 минуты.</li>
+      <li>Игра записывает смену, чтобы Claude мог её разобрать.</li>
+    </ul>
+    <div class="legend"><span style="background:var(--tmp)">TMP · 1–3 кл. · 1 с/кл.</span><span style="background:var(--doc)">DOC · 4–5 · 1,5 с/кл.</span><span style="background:var(--png)">PNG · 4–6 · 1,5 с/кл.</span><span style="background:var(--raw)">RAW · 5–10 · 1,7 с/кл.</span></div>
+    <button id="exportBtn" hidden>Отправить журналы</button>
+    <button class="primary" id="startBtn">Начать смену</button>
+  </div>
+</div>
+<script>
+(()=>{
+// ---------- Tuning (v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
+const SLOW=0.5, SLOW_MAX=3;
+// v13: processing time = cells × seconds-per-cell of the type (then × specialist factor); intake overflows by cells, not files
+const GRACE=10, REFILL=0.5; // an overfull intake drains a 10 s reserve; it refills at 1 s per 2 s once fixed (v15)
+const IDLE_FLASH=2, FLASH_GAP=6; // v15: piece outlines flash after 2 s without input, at most once per 6 s
+const PER_CELL={TMP:1.0,DOC:1.5,PNG:1.5,RAW:1.7};
+const procTime=f=>PER_CELL[f.type]*f.shape.length;
+const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
+const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
+const VERSION='v47', COLS=8, ROWS=10, SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+// Colour = file type; each type comes in several shapes (heavier types are bigger).
+const TYPES={
+  TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
+  DOC:{color:'var(--doc)',time:7.5,reward:5,w:28,shapes:[
+    [[0,0],[0,1],[0,2],[1,2]],[[1,0],[1,1],[1,2],[0,2]],[[0,0],[1,0],[2,0],[1,1]],
+    [[1,0],[2,0],[0,1],[1,1]],[[0,0],[1,0],[1,1],[2,1]],[[0,0],[1,0],[0,1],[1,1],[0,2]],[[0,0],[1,0],[0,1],[1,1],[1,2]]]}, // …S, Z, P, mirrored P
+  PNG:{color:'var(--png)',time:6.25,reward:7,w:20,shapes:[
+    [[0,0],[1,0],[0,1],[1,1]],[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],[[1,0],[0,1],[1,1],[2,1],[1,2]],
+    [[0,0],[2,0],[0,1],[1,1],[2,1]],[[0,0],[1,0],[2,0],[1,1],[1,2]]]}, // …, U, big T (both mirror-symmetric, so no mirrored pair is needed)
+  RAW:{color:'var(--raw)',time:11.25,reward:9,w:17,shapes:[
+    [[0,0],[0,1],[0,2],[0,3],[0,4]],[[0,0],[0,1],[0,2],[1,2],[2,2]],
+    [[0,0],[1,0],[0,1],[1,1],[0,2],[1,2],[0,3],[1,3]],[[0,0],[1,0],[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4]]]},
+};
+const $=id=>document.getElementById(id);
+const board=$('board'), tray=$('tray'), cur=$('current'), next=$('next'), trash=document.createElement('div'); // the trash was removed in v34 (never used); kept detached so old code paths stay inert
+const slots=[...cur.querySelectorAll('.slot')];
+let S, L=null, cell=36, raf=0, last=0, nextId=1;
+
+function rotate(shape){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return r.map(([x,y])=>[x-mx,y-my]);}
+function rotatePoint(shape,[px,py]){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return [maxY-py-mx,px-my];}
+function pickType(){let n=Math.random()*100;for(const [k,t] of Object.entries(TYPES)){n-=t.w;if(n<0)return k;}return 'TMP';}
+function newFile(){const type=pickType(),list=TYPES[type].shapes,si=Math.floor(Math.random()*list.length);let shape=list[si].map(c=>[...c]);for(let r=Math.floor(Math.random()*4);r>0;r--)shape=rotate(shape);
+  const f={id:nextId++,type,si,shape};logArrive(f);return f;}
+
+// ---------- Playtest record: everything Claude needs to read the shift afterwards ----------
+const r1=x=>Math.round(x*10)/10;
+function logStart(){L={v:VERSION,id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),started:new Date().toISOString(),
+  device:{app:NATIVE?'ios-app':(window.Telegram?.WebApp&&window.Telegram.WebApp.platform!=='unknown')?'tg-'+window.Telegram.WebApp.platform:'web',ua:navigator.userAgent.slice(0,160),coarse:matchMedia('(pointer:coarse)').matches,w:innerWidth,h:innerHeight,cell:0},
+  params:{audio:{...AUD},hand:HAND,grace:GRACE,refill:REFILL,idleFlash:[IDLE_FLASH,FLASH_GAP],slow:[SLOW,SLOW_MAX],spec:[SPEC_OWN,SPEC_OTHER],shift:SHIFT,qcells:QCELLS,perCell:PER_CELL,vis:VIS,flow:FLOW,prices:PRICES,board:[COLS,ROWS],types:Object.fromEntries(Object.entries(TYPES).map(([k,t])=>[k,{time:t.time,reward:t.reward,w:t.w}]))},
+  files:{},ev:[],samples:[],result:null};}
+function logArrive(f){if(L)L.files[f.id]={ty:f.type,si:f.si,a:r1(S?S.time:0),v:null,p:null,r:0,d:0,f:0,m:0,x:null,y:null,out:'wait'};}
+const F=id=>L?.files[id];
+function ev(...a){if(L&&L.ev.length<1500)L.ev.push([r1(S.time),...a]);try{sfxEvent(a);}catch(e){}}
+
+// ---------- Saving the record (db capability; falls back to "copy report") ----------
+let dbP=null, saveChain=Promise.resolve(), saveState='';
+// iPhone app (WKWebView wrapper): shifts are saved on the phone and exported as one file
+const NATIVE=!!window.webkit?.messageHandlers?.defrag;
+const TG=(window.Telegram?.WebApp&&window.Telegram.WebApp.platform!=='unknown')?window.Telegram.WebApp:null;
+const HAPT=NATIVE||!!TG?.HapticFeedback;
+if(matchMedia('(pointer:coarse)').matches)document.documentElement.classList.add('coarse'); // touch screens: touch wording
+function nativePost(msg){try{window.webkit.messageHandlers.defrag.postMessage(msg);}catch(e){}}
+function exportLogs(){nativePost({type:'export'});}
+function getDb(){if(!dbP)dbP=(window.claude?.use?window.claude.use('db'):Promise.resolve(null)).catch(()=>null);return dbP;}
+function saveRun(note){const snap=JSON.parse(JSON.stringify(L));
+  if(NATIVE){nativePost({type:'shift',id:snap.id,json:JSON.stringify(snap)});saveState='native';const n=$('saveNote');if(n)n.textContent=saveText();return Promise.resolve();}
+  saveChain=saveChain.then(async()=>{const db=await getDb();if(!db){saveState='nodb';return;}
+    try{await db.collection('playtests').doc(snap.id).set(snap);saveState='ok';}catch(e){saveState='err:'+(e?.code||e?.message||e);}})
+    .then(()=>{const n=$('saveNote');if(n)n.textContent=saveText();});return saveChain;}
+function saveText(){return saveState==='native'?'Смена сохранена в телефоне. Все журналы разом — кнопка «Отправить журналы».':saveState==='ok'?'Запись смены сохранена — Claude её прочитает.':saveState==='nodb'?'Сохранить запись тут нельзя — нажмите «Скопировать отчёт» и вставьте его в чат.':saveState.startsWith('err')?'Запись не сохранилась ('+saveState.slice(4)+'). Скопируйте отчёт и вставьте в чат.':'Сохраняю запись…';}
+
+function reset(){
+  S={over:0,reserve:GRACE,flashes:0,overflows:0,time:0,credits:0,spent:0,bots:[{id:1,pref:null,busy:null}],slowRes:SLOW_CAP0,slowCap:SLOW_CAP0,slowUps:0,slowOn:false,vs:{arrived:0,scanned:0,avDel:0,placed:0,woke:0,infected:0,killed:0,avCost:0},threats:planThreats(),queue:[],pieces:new Map(),grid:Array.from({length:ROWS},()=>Array(COLS).fill(0)),spawn:1.0,state:'play',moves:0,done:0,order:0,trashed:0,slowT:0,slowDrags:0,nextSample:0};
+  S.queue.push(newFile(),newFile(),newFile());
+  board.querySelectorAll('.piece,.pop').forEach(e=>e.remove());
+}
+function fits(shape,ox,oy,ignore=0){return shape.every(([x,y])=>{const X=ox+x,Y=oy+y;return X>=0&&Y>=0&&X<COLS&&Y<ROWS&&(S.grid[Y][X]===0||S.grid[Y][X]===ignore);});}
+function setCells(p,val){for(const [x,y] of p.shape)S.grid[p.oy+y][p.ox+x]=val;}
+function place(file,ox,oy){const p={...file,ox,oy,order:S.order++,proc:null};if(p.vir&&p.wakeAt==null){p.wakeAt=S.time+V_WAKE[0]+Math.random()*(V_WAKE[1]-V_WAKE[0]);S.vs.placed++;ev('virus-placed',p.id);}S.pieces.set(p.id,p);setCells(p,p.id);
+  const l=F(p.id);if(l){l.p=r1(S.time);l.x=ox;l.y=oy;l.out='placed';}return p;}
+const fill=()=>S.grid.flat().filter(Boolean).length;
+
+function layout(){const wrap=$('boardWrap').getBoundingClientRect();cell=Math.max(22,Math.floor(Math.min((wrap.width-6)/COLS,(wrap.height-6)/ROWS,46)));
+  board.style.width=COLS*cell+'px';board.style.height=ROWS*cell+'px';if(L)L.device.cell=cell;
+  board.style.backgroundImage=`linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px)`;board.style.backgroundSize=`${cell}px ${cell}px`;render();}
+
+function drawShape(container,file,size,cls=''){
+  const el=document.createElement('div');el.className='piece '+cls;el.style.position='absolute';
+  const t=TYPES[file.type];file.shape.forEach(([x,y],i)=>{const c=document.createElement('div');c.className='cell';Object.assign(c.style,{left:x*size+'px',top:y*size+'px',width:size+'px',height:size+'px',background:t.color,borderRadius:Math.max(3,Math.round(size*.18))+'px',borderWidth:size<24?'2px':''});if(i===0){c.textContent=file.type /* shape numbers hidden for now (author, 2026-10-21); logs keep si */;c.style.whiteSpace='nowrap';c.style.letterSpacing='-.02em';}c.dataset.i=i;el.append(c);});
+  container.append(el);return el;}
+function shapeBox(shape,size){return {w:(Math.max(...shape.map(c=>c[0]))+1)*size,h:(Math.max(...shape.map(c=>c[1]))+1)*size};}
+
+function renderTray(){
+  const box=slots[0].clientWidth||76;
+  slots.forEach((sl,i)=>{const f=S.queue[i];const key=f?`${f.id}|${f.shape.join(';')}`:'';sl.classList.toggle('empty',!f);
+    sl.classList.toggle('lifted',!!(f&&drag?.moved&&drag.id===f.id));
+    if(f&&L&&F(f.id)&&F(f.id).v===null)F(f.id).v=r1(S.time);
+    if(sl.dataset.key===key)return;sl.dataset.key=key;sl.querySelectorAll('.piece').forEach(e=>e.remove());
+    if(!f)return;const size=Math.min(20,Math.floor((box-12)/Math.max(...f.shape.map(c=>Math.max(c[0],c[1])+1))));const el=drawShape(sl,f,size);const b=shapeBox(f.shape,size);
+    Object.assign(el.style,{inset:'auto',left:`calc(50% - ${b.w/2}px)`,top:`calc(50% - ${b.h/2}px)`,width:b.w+'px',height:b.h+'px',pointerEvents:'none'});
+    el.querySelectorAll('.cell').forEach(c=>{c.style.pointerEvents='none';c.style.fontSize=size<20?'0':'8px';});});
+  next.replaceChildren();
+  for(const f2 of S.queue.slice(VIS,VIS+3)){const bx=document.createElement('div');bx.className='mini';bx.style.position='relative';const b=shapeBox(f2.shape,7);bx.style.width=b.w+'px';bx.style.height=b.h+'px';const el=drawShape(bx,f2,7);el.querySelectorAll('.cell').forEach(c=>{c.textContent='';c.style.borderWidth='1.5px';c.style.borderRadius='2px';});next.append(bx);}
+  const qc=qCells(),r=qc/QCELLS;$('qn').textContent=`${qc}/${QCELLS}`;const bar=$('qbar').firstChild;bar.style.width=Math.min(100,r*100)+'%';bar.style.background=r>=.75?'var(--danger)':r>=.5?'var(--gold)':'var(--png)';tray.classList.toggle('warn',r>=.75);
+}
+let diagText='',diagUntil=0;
+function diag(t){} // on-screen diagnostics retired in v9 (presses are still logged)
+let slowUi=false;
+function setSlowUi(on){if(on===slowUi)return;slowUi=on;$('timeChip').classList.toggle('slow',on);board.classList.toggle('slow',on);$('timeLbl').textContent=on?'ВРЕМЯ ×0,5':'ВРЕМЯ';}
+const alarm=$('alarm');
+function setAlarm(mode,left){if(!mode){if(!alarm.hidden)alarm.hidden=true;return;}alarm.hidden=false;alarm.classList.toggle('refill',mode==='refill');
+  alarm.querySelector('span').textContent=mode==='over'?'Вход переполнен — освободите место':'Запас на переполнение восстанавливается';
+  alarm.querySelector('b').textContent=left.toFixed(1).replace('.',',')+' с';alarm.querySelector('i').style.width=Math.max(0,100*left/GRACE)+'%';}
+// ---------- Piece outlines: a glow drawn on top of the cells (cells stay as they are) ----------
+const outl=document.createElementNS('http://www.w3.org/2000/svg','svg');outl.id='outl';outl.setAttribute('aria-hidden','true');board.append(outl);
+let outlKey='',flashT=-1e9,lastInput=performance.now(),lastFlash=-1e9;
+function outlinePath(skip){let d='';for(const p of S.pieces.values()){if(p.id===skip)continue;const own=new Set(p.shape.map(([x,y])=>x+','+y));
+  for(const [x,y] of p.shape){const X=(p.ox+x)*cell,Y=(p.oy+y)*cell;
+    if(!own.has(x+','+(y-1)))d+=`M${X} ${Y}h${cell}`;if(!own.has(x+','+(y+1)))d+=`M${X} ${Y+cell}h${cell}`;
+    if(!own.has((x-1)+','+y))d+=`M${X} ${Y}v${cell}`;if(!own.has((x+1)+','+y))d+=`M${X+cell} ${Y}v${cell}`;}}return d;}
+function drawOutlines(mode){const skip=drag?.moved&&drag.from==='board'?drag.id:0;const key=mode+'|'+skip+'|'+cell+'|'+[...S.pieces.values()].map(p=>p.id+':'+p.ox+','+p.oy+':'+p.shape.join(';')).join('/');
+  if(key!==outlKey){outlKey=key;outl.setAttribute('width',COLS*cell);outl.setAttribute('height',ROWS*cell);outl.innerHTML=`<path d="${outlinePath(skip)}"/>`;}
+  outl.setAttribute('class',mode);}
+function maybeFlash(){const now=performance.now();
+  if(!drag&&S.pieces.size>=2&&now-lastInput>IDLE_FLASH*1000&&now-lastFlash>FLASH_GAP*1000){lastFlash=now;flashT=now;S.flashes++;}}
+function updateOutlines(){if(!S||S.state!=='play'){if(outl.getAttribute('class'))outl.setAttribute('class','');return;}
+  if(drag?.moved)return drawOutlines('hold');
+  const k=(performance.now()-flashT)/1000;if(k<1.4)return drawOutlines('flash');
+  if(outl.getAttribute('class'))outl.setAttribute('class','');}
+for(const t of ['pointerdown','keydown'])addEventListener(t,()=>{lastInput=performance.now();},true);
+function render(){
+  if(!S)return;
+  updateOutlines();
+  board.querySelectorAll('.piece:not(.ghost)').forEach(e=>{if(!S.pieces.has(+e.dataset.id)||(drag?.moved&&drag.id===+e.dataset.id))e.remove();});
+  const CLU=clustersNow();
+  for(const p of S.pieces.values()){
+    if(drag?.moved&&drag.from==='board'&&drag.id===p.id)continue;
+    let el=board.querySelector(`.piece[data-id="${p.id}"]`);
+    if(!el||el.dataset.key!==`${p.ox},${p.oy},${p.shape.join(';')}`){el?.remove();el=drawShape(board,p,cell);el.dataset.id=p.id;el.dataset.key=`${p.ox},${p.oy},${p.shape.join(';')}`;Object.assign(el.style,{left:p.ox*cell+'px',top:p.oy*cell+'px'});}
+    el.classList.toggle('busy',!!p.proc);el.classList.toggle('virus',!!p.awake);el.classList.toggle('infected',!!p.infected);
+    {const ci=CLU.get(p.id),inC=!!(ci||p.proc?.members?.length>1);el.classList.toggle('clu',inC);let tg=el.querySelector('.clutag');const showT=ci?.isLead||(p.proc?.members?.length>1&&p.proc.lead===p.id);
+      if(showT){if(!tg){tg=document.createElement('div');tg.className='clutag';el.append(tg);}const n=ci?ci.n:p.proc.members.length,rb=p.proc?p.proc.bots.length:0;const txt='×'+n+(rb>1?' · '+rb+'🤖':'');if(tg.textContent!==txt)tg.textContent=txt;const [x,y]=p.shape[0];Object.assign(tg.style,{left:x*cell+3+'px',top:y*cell+cell-19+'px'});}else tg?.remove();}
+    {let sq=el.querySelector('.susb');const showQ=p.sus&&!p.scan&&!p.awake;if(showQ&&!sq){const [x,y]=p.shape[0];sq=document.createElement('div');sq.className='susb';sq.textContent='?';Object.assign(sq.style,{left:x*cell+cell-13+'px',top:y*cell-7+'px'});el.append(sq);}else if(!showQ&&sq)sq.remove();}
+    {let bug=el.querySelector('.bugb');if(p.awake&&!bug){const [x,y]=p.shape[0];bug=document.createElement('div');bug.className='bugb';bug.innerHTML=BUG_SVG;Object.assign(bug.style,{left:x*cell+cell-14+'px',top:y*cell-8+'px'});el.append(bug);}else if(!p.awake&&bug)bug.remove();}
+    let badge=el.querySelector('.badge'),ring=el.querySelector('.ring');
+    if(p.proc){const [x,y]=p.shape[0];
+      if(!badge){badge=document.createElement('div');badge.className='badge';badge.innerHTML='<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="3" fill="#fff" stroke="#14123a" stroke-width="1.6"/><circle cx="5.3" cy="7.3" r="1.3" fill="#14123a"/><circle cx="8.7" cy="7.3" r="1.3" fill="#14123a"/><path d="M7 3V1" stroke="#14123a" stroke-width="1.6" stroke-linecap="round"/></svg>';el.append(badge);ring=document.createElement('div');ring.className='ring';el.append(ring);}
+      const bot=S.bots.find(b=>b.id===p.proc.bot);Object.assign(badge.style,{left:x*cell+cell/2-11+'px',top:y*cell+cell/2-11+'px',background:bot?.pref?prefColor(bot.pref):'var(--cream)'});badge.dataset.n=p.proc.bot;
+      const k=Math.min(1,p.proc.t/p.proc.dur);Object.assign(ring.style,{left:x*cell+cell/2-15+'px',top:y*cell+cell/2-15+'px',width:'30px',height:'30px',background:`conic-gradient(var(--gold) ${k*360}deg, transparent 0)`});ring.classList.toggle('boost',!!p.proc.boostAt&&performance.now()-p.proc.boostAt<650);
+    }else{badge?.remove();ring?.remove();}
+  }
+  renderTray();renderVirusUi();renderSlowBtn();
+  $('credits').textContent=S.credits;
+  const left=Math.max(0,SHIFT-S.time);$('time').textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
+  $('pauseBtn').disabled=S.state!=='play';
+  renderRobots();rotBtn.classList.toggle('idle',!drag?.moved);document.querySelector('.actions').classList.toggle('zone',!!drag?.moved);
+  $('status').textContent=`Роботов: ${S.bots.length} · свободно ${COLS*ROWS-fill()} из ${COLS*ROWS}`;
+}
+// Robot cards: tap to cycle the robot's favourite type (Любые → TMP → DOC → PNG → RAW). The last card buys a robot.
+const robotsEl=$('robots');let robotsKey='';
+const NAG_AFTER=4; // s of game time with an affordable robot before the buy card nudges harder
+function renderRobots(force){if(!S)return;const price=PRICES[S.bots.length-1],can=S.state==='play'&&S.bots.length<MAXR&&S.credits>=price;
+  if(can&&S.readyFor!==S.bots.length){S.readyFor=S.bots.length;S.readyAt=S.time;ev('buy-ready',S.bots.length+1,S.credits);}
+  if(!can&&S.readyFor===S.bots.length&&S.credits<price)S.readyFor=null;
+  const nag=can&&S.time-S.readyAt>=NAG_AFTER;
+  const avState=b=>b.pref!=='AV'?'':S.credits<=0?'нет кр.':b.scan?'проверка':b.busy&&S.pieces.get(b.busy)?.proc?'удаляет':'ждёт';
+  const key=S.bots.map(b=>b.id+(b.pref||'*')+avState(b)).join()+'|'+S.bots.length+'|'+can+'|'+nag+'|'+!!S.avNag+'|'+S.state;
+  if(force||key!==robotsKey){robotsKey=key;robotsEl.replaceChildren();
+    for(const b of S.bots){const c=document.createElement('button');c.className='rcard'+(b.pref==='AV'?' av':'')+(b.pref==='AV'&&S.avNag?' avnag':'');c.dataset.bot=b.id;c.style.background=b.pref?prefColor(b.pref):'var(--cream)';
+      c.innerHTML=`<span class="rname">Робот ${b.id}</span><span class="rpref">${b.pref||'Любые'}</span>`+(b.pref==='AV'?`<span class="rstate">${avState(b)} · −1/2с</span>`:'')+(b.pref==='AV'&&S.avNag?'<span class="nagtip">Угроза снята — верните робота</span>':'')+`<span class="rbar"></span>`;
+      c.setAttribute('aria-label',`Робот ${b.id}: ${b.pref?'специалист '+b.pref:'берёт любые файлы'}. Нажмите, чтобы сменить тип`);
+      c.addEventListener('pointerdown',e=>openFan(e,b,c));robotsEl.append(c);}
+    if(S.bots.length<MAXR){const c=document.createElement('button');c.id='buy';c.className='rcard buy'+(can?' ready':'')+(nag?' nag':'');c.disabled=!can&&S.state!=='play';
+      c.innerHTML=`<span class="rname">＋ Робот</span><span>${price} кр.</span>`+(nag?'<span class="nagtip">Хватает — купить!</span>':'');c.setAttribute('aria-label',`Купить робота за ${price} кредитов`);
+      c.onclick=()=>{const price=PRICES[S.bots.length-1];if(S.state==='play'&&S.bots.length<MAXR&&S.credits>=price){S.credits-=price;S.spent+=price;S.bots.push({id:S.bots.length+1,pref:null,busy:null});ev('buy',S.bots.length,S.credits,Math.round((S.time-(S.readyAt??S.time))*10)/10);renderRobots(true);render();}};robotsEl.append(c);}}
+  // progress bars
+  for(const b of S.bots){const bar=robotsEl.querySelector(`[data-bot="${b.id}"] .rbar`);const p=b.busy&&S.pieces.get(b.busy);if(bar)bar.style.width=b.scan?Math.min(100,100*b.scan.t/b.scan.dur)+'%':p?.proc?Math.min(100,100*p.proc.t/p.proc.dur)+'%':'0';}}
+// Fan menu: press a robot card → five choices fan out above it; slide to one and release (or tap, then tap a choice).
+const fan=document.createElement('div');fan.id='fan';fan.hidden=true;document.body.append(fan);
+let fanState=null;
+function openFan(e,b,card){if(S?.state!=='play'||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();closeFan();
+  const r=card.getBoundingClientRect(),R=PREFS.length>5?108:84,cx=Math.max(R+40,Math.min(innerWidth-R-40,r.left+r.width/2)),cy=r.top-6;
+  fan.replaceChildren();const opts=[];
+  PREFS.forEach((pf,i)=>{const a=Math.PI*(1-(i+0.5)/PREFS.length),x=cx+Math.cos(a)*R,y=cy-Math.sin(a)*R;
+    const o=document.createElement('button');o.className='fanopt'+(b.pref===pf?' cur':'');o.textContent=pf||'Любые';o.style.left=x+'px';o.style.top=y+'px';
+    o.style.background=pf?prefColor(pf):'var(--cream)';if(pf==='AV')o.style.color='#14123a';o.setAttribute('aria-label',pf?'Специалист '+pf:'Любые файлы');
+    o.addEventListener('click',()=>{if(fanState?.sticky)pickFan(pf,'tap');});fan.append(o);opts.push({pf,x,y,el:o});});
+  const hub=document.createElement('div');hub.className='fanhub';hub.style.left=cx+'px';hub.style.top=cy+'px';hub.textContent='Робот '+b.id;fan.append(hub);
+  fan.hidden=false;fanState={b,opts,pid:e.pointerId,t0:performance.now(),x0:e.clientX,y0:e.clientY,moved:false,hover:null,sticky:false};}
+function fanHit(x,y){let best=null,bd=40;for(const o of fanState.opts){const d=Math.hypot(x-o.x,y-o.y);if(d<bd){bd=d;best=o;}}return best;}
+// v47 (author, 2026-10-25): specialisation may only speed up the job in hand, never slow it. A robot that took a DOC
+// as «Любые» and is then switched to DOC finishes the rest 20% faster; switching away keeps the job as it was.
+// t and dur are scaled together, so the ring keeps its position and simply runs faster.
+function specBoost(b){if(!b.pref||b.pref==='AV')return;for(const p of S.pieces.values()){const pr=p.proc;if(!pr||pr.lead!==p.id||pr.bot!==b.id||pr.type!==b.pref||pr.k<=SPEC_OWN||p.vir)continue;
+  const r=SPEC_OWN/pr.k;pr.t*=r;pr.dur*=r;pr.k=SPEC_OWN;pr.boostAt=performance.now();
+  for(const id of pr.members){const l=F(id);if(l)l.k=SPEC_OWN;}ev('spec-boost',p.id,b.id,b.pref,r1(pr.dur-pr.t));sfx('boost');haptic('light');}}
+function pickFan(pf,how){const b=fanState.b;if(S.state==='play'&&b.pref!==pf){b.pref=pf;ev('pref',b.id,pf,how);specBoost(b);}closeFan();renderRobots(true);}
+function closeFan(){fan.hidden=true;fan.replaceChildren();fanState=null;}
+addEventListener('pointermove',e=>{if(!fanState||fanState.sticky||e.pointerId!==fanState.pid)return;
+  if(Math.hypot(e.clientX-fanState.x0,e.clientY-fanState.y0)>8)fanState.moved=true;
+  const h=fanHit(e.clientX,e.clientY);if(h!==fanState.hover){fanState.hover?.el.classList.remove('hot');h?.el.classList.add('hot');fanState.hover=h;}});
+addEventListener('pointerup',e=>{if(!fanState||fanState.sticky||e.pointerId!==fanState.pid)return;
+  const h=fanHit(e.clientX,e.clientY);if(h)return pickFan(h.pf,'slide');
+  if(!fanState.moved&&performance.now()-fanState.t0<400){fanState.sticky=true;return;} // quick tap: keep the fan open for a tap choice
+  closeFan();});
+addEventListener('pointerdown',e=>{if(fanState?.sticky&&!fan.contains(e.target))closeFan();},true);
+addEventListener('pointercancel',e=>{if(fanState&&!fanState.sticky&&e.pointerId===fanState.pid)closeFan();});
+robotsEl.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&fanState){closeFan();e.stopImmediatePropagation();}},true);
+function popAt(p,text){const [x,y]=p.shape[0];const el=document.createElement('div');el.className='pop';el.textContent=text;Object.assign(el.style,{left:(p.ox+x)*cell+'px',top:(p.oy+y)*cell+'px'});board.append(el);setTimeout(()=>el.remove(),900);}
+
+function tick(now){
+  const rdt=Math.min(.1,(now-last)/1000);last=now;
+  // slow motion: while a file from memory is being moved, the whole game runs at ×0.5 — for the first 3 s of that drag only
+  if(S.state==='play')slowTick(rdt);
+  const slow=!!(S.state==='play'&&(S.slowOn||(drag?.moved&&drag.from==='board'&&(performance.now()-drag.movedAt)/1000<SLOW_MAX)||(fanState&&(performance.now()-fanState.t0)/1000<SLOW_MAX)));
+  const dt=slow?rdt*SLOW:rdt;if(slow)S.slowT+=rdt;setSlowUi(slow);
+  if(S.state==='play'){
+    S.time+=dt;
+    // arrivals: one file every 2.8 s at the start, every 1.9 s at the end
+    S.spawn-=dt;if(S.spawn<=0){const k=Math.min(1,S.time/SHIFT);S.spawn=FLOW[0]-(FLOW[0]-FLOW[1])*k;S.queue.push(maybeVirus(newFile(),S.spawn));}
+    // robots: a specialist takes the oldest file of its type first, otherwise the oldest file of any type;
+    // specialists choose before universal robots so a universal robot doesn't steal their files
+    const idle=[...S.pieces.values()].filter(p=>!p.proc&&!(drag?.from==='board'&&drag.id===p.id)).sort((a,b)=>a.order-b.order);
+    for(const b of [...S.bots].sort((a,b)=>(b.pref?1:0)-(a.pref?1:0))){if(b.scan)continue;if(b.busy&&S.pieces.get(b.busy)?.proc)continue;b.busy=null;
+      if(b.pref==='AV'){if(S.credits<=0)continue;if(avStartScan(b))continue;}
+      // a free specialist joins a running cluster of its type (up to CL_MAXBOTS robots on one cluster)
+      if(b.pref&&b.pref!=='AV'){const pr=runningProcs().find(pr=>pr.members.length>1&&pr.type===b.pref&&pr.bots.length<CL_MAXBOTS);
+        if(pr){pr.bots.push(b.id);b.busy=pr.lead;ev('cluster-join',pr.lead,b.id,pr.bots.length);continue;}}
+      // AV only hunts awake viruses; every other robot skips them (it cannot destroy a virus)
+      const pool=b.pref==='AV'?idle.filter(p=>p.vir&&p.awake):idle.filter(p=>!(p.vir&&p.awake));
+      let p=b.pref&&b.pref!=='AV'?pool.find(q=>q.type===b.pref):null;if(!p)p=pool[0];if(!p)continue;
+      if(p.vir&&b.pref!=='AV'){idle.splice(idle.indexOf(p),1);wakeVirus(p,'touched',b.id);continue;} // a plain robot picks up a hidden virus: it wakes
+      // the whole cluster of this file goes to work with it; hidden viruses inside it wake and stay behind
+      let members=p.vir?[p]:clusterOf(p,idle);
+      for(const q of members)if(q.vir&&q!==p){wakeVirus(q,'touched',b.id);}
+      members=members.filter(q=>!q.vir||q===p);
+      for(const q of members)idle.splice(idle.indexOf(q),1);
+      const k=b.pref&&b.pref!=='AV'?(p.type===b.pref?SPEC_OWN:SPEC_OTHER):1;
+      const base=members.reduce((a,q)=>a+procTime(q)*(q.infected?V_SLOW:1),0)*(members.length>1?CL_TIME:1);
+      const pr={t:0,dur:p.vir?V_AV_KILL:base*k,bot:b.id,bots:[b.id],k,members:members.map(q=>q.id),lead:p.id,type:p.type};
+      for(const q of members){q.proc=pr;const l=F(q.id);if(l){l.bot=b.id;l.k=k;l.s=r1(S.time);if(members.length>1)l.cl=members.length;}}
+      b.busy=p.id;if(members.length>1){S.clusters=(S.clusters||0)+1;ev('cluster',p.id,members.length,members.map(q=>q.id).join(','));}}
+    {const seen=new Set();for(const p of [...S.pieces.values()]){const pr=p.proc;if(!pr||seen.has(pr))continue;seen.add(pr);
+      pr.t+=dt*CL_SPEED[Math.min(pr.bots.length,CL_SPEED.length)-1];if(pr.t<pr.dur)continue;
+      const ms=pr.members.map(id=>S.pieces.get(id)).filter(Boolean);let sum=0;
+      for(const q of ms){setCells(q,0);S.pieces.delete(q.id);const rw=pieceReward(q);S.credits+=rw;sum+=rw;S.done++;const l=F(q.id);if(l)l.out=q.vir?'virus-killed':q.infected?'done-infected':'done';}
+      for(const id of pr.bots){const b=S.bots.find(b=>b.id===id);if(b&&b.busy===pr.lead)b.busy=null;}
+      if(ms.length>1){popAt(ms[0],'+'+sum);ev('cluster-done',pr.lead,ms.length,pr.bots.length,r1(pr.dur));fxCluster(ms,pr.bots.length);}
+      else{const q=ms[0];if(!q)continue;popAt(q,'+'+sum);if(q.vir){S.vs.killed++;ev('virus-killed',q.id,pr.bot);fxVirusDone(q);if(![...S.pieces.values()].some(x=>x.vir&&x.awake)){ev('virus-purged');fxSpecial('VIRUS PURGED','purged',q);}}else fxDone(q);}
+      if(S.pieces.size===0&&S.time>15&&S.time-(S.lastClean??-99)>20){S.lastClean=S.time;ev('system-clean');fxSpecial('SYSTEM CLEAN','clean');}}}
+    virusTick(dt);avTick(dt);
+    if(L&&S.time>=S.nextSample){S.nextSample+=5;L.samples.push([r1(S.time),S.queue.length,fill(),S.credits,S.bots.length,[...S.pieces.values()].filter(p=>p.proc).length,S.bots.map(b=>b.pref||'*').join('')]);}
+    // overflow grace: over 24 cells starts a 10 s countdown; getting back to 24 or less cancels it
+    // the reserve drains while overfull and refills slowly after: repeated overflows add up
+    if(qCells()>QCELLS){if(!S.over){S.over=1;S.overStart=S.reserve;S.overflows++;ev('overflow',qCells(),r1(S.reserve));}S.reserve-=dt;if(S.reserve<=0){S.reserve=0;setAlarm('over',0);return end(false);}}
+    else{if(S.over){ev('overflow-fixed',r1(S.overStart-S.reserve),r1(S.reserve));S.over=0;}S.reserve=Math.min(GRACE,S.reserve+dt*REFILL);}
+    setAlarm(S.over?'over':S.reserve<GRACE-0.05?'refill':'',S.reserve);
+    maybeFlash();fxBits(dt);sfxTick(dt);
+    if(S.time>=SHIFT)return end(true);
+    render();
+  }
+  raf=requestAnimationFrame(tick);
+}
+function end(win){setAlarm('');cancelDrag();closeFan();setSlowUi(false);S.state='over';cancelAnimationFrame(raf);render();musicStop();S.slowOn=false;document.body.classList.remove('slowmo');sfx(win?'win':'lose');haptic(win?'success':'error');$('laneHint').textContent=win?'смена закрыта':'вход переполнен';
+  L.result={slow:{ups:S.slowUps,starts:S.slowStarts||0,used:r1(S.slowUsed||0)},vir:{...S.vs},win,overflows:S.overflows,flashes:S.flashes,reserveEnd:r1(S.reserve),slowT:r1(S.slowT),slowDrags:S.slowDrags,t:r1(S.time),credits:S.credits,spent:S.spent,done:S.done,moves:S.moves,trashed:S.trashed,robots:S.bots.length,prefs:S.bots.map(b=>b.pref),fill:fill(),queue:S.queue.length,endedAt:new Date().toISOString()};
+  saveState='';saveRun();
+  $('dialog').innerHTML=`<h2>${win?'Смена закрыта':'Вход переполнен'}</h2><p>${win?'Вы продержались 2 минуты.':'Вход был переполнен (больше 24 клеток) дольше 10 секунд.'}</p><div class="stat">${S.credits} кр.</div><p>Обработано файлов: ${S.done} · перемещений: ${S.moves} · выброшено: ${S.trashed} · время: ${Math.floor(S.time)} с</p>
+  <label for="note"><b>Что мешало или понравилось?</b> (необязательно)</label><textarea id="note" placeholder="Пара слов для Claude"></textarea>
+  <p id="saveNote">${saveText()}</p>
+  <div class="row"><button id="copyBtn">${NATIVE?'Отправить журналы':'Скопировать отчёт'}</button><button class="primary" id="startBtn">Ещё раз</button></div>`;
+  fxEnd(win,()=>{if(S?.state==='over')$('overlay').hidden=false;});$('startBtn').onclick=start;$('copyBtn').onclick=NATIVE?()=>{const n=$('note');if(n&&n.value.trim()!==(L.comment||'')){L.comment=n.value.trim();saveRun();}exportLogs();}:copyReport;
+  let tmr=0;$('note').addEventListener('input',e=>{clearTimeout(tmr);tmr=setTimeout(()=>{L.comment=e.target.value.trim();saveRun();},900);});}
+async function copyReport(){if(L)L.comment=$('note')?.value.trim()||L.comment;const txt='DEFRAG-REPORT '+JSON.stringify(L);
+  try{await navigator.clipboard.writeText(txt);$('copyBtn').textContent='Скопировано ✓';}catch(e){const ta=$('note');ta.value=txt;ta.select();$('copyBtn').textContent='Выделено — нажмите ⌘C';}}
+function pause(){if(S?.state!=='play')return;cancelDrag();closeFan();setSlowUi(false);S.state='pause';musicMuffle(true);if(!mus?.id)musicStart();ev('pause');render();saveRun();
+  $('dialog').innerHTML=`<h2>Пауза</h2><p>Время остановлено, файлы не приходят, роботы ждут.</p><div class="stat">${$('time').textContent}</div><p>Продолжить: кнопка ниже, P или Esc.</p><p>Кнопка ⟳ под большой палец:</p><div class="hand"><button id="handR" class="${HAND==='right'?'on':''}">Правша — ⟳ слева</button><button id="handL" class="${HAND==='left'?'on':''}">Левша — ⟳ справа</button></div><p>Звук и вибрация (в паузе музыка звучит приглушённо):</p><div class="hand" id="audioSet"></div><button class="primary" id="resumeBtn">Продолжить</button>`;
+  $('overlay').hidden=false;$('resumeBtn').onclick=resume;renderAudioSet();
+  $('handR').onclick=()=>{setHand('right');$('handR').classList.add('on');$('handL').classList.remove('on');};
+  $('handL').onclick=()=>{setHand('left');$('handL').classList.add('on');$('handR').classList.remove('on');};$('resumeBtn').focus();}
+function resume(){if(S?.state!=='pause')return;S.state='play';musicMuffle(false);if(!mus?.id)musicStart();ev('resume');$('overlay').hidden=true;last=performance.now();render();try{window.focus();}catch(e){}}
+function start(){const note=$('note');if(L&&note&&note.value.trim()!==(L.comment||'')){L.comment=note.value.trim();saveRun();}
+  cancelDrag();logStart();reset();$('overlay').hidden=true;audioInit();musicMuffle(false);musicStart();$('laneHint').textContent='вход в норме';layout();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);getDb();}
+
+// ---------- Input: drag only ----------
+// Drag a file from one of the three intake slots or a piece in memory; drop on the board or the trash.
+// A drop snaps to the nearest free position within one cell (pulled inside the board first).
+// A drag the system takes over (pointercancel) changes nothing.
+let drag=null, hoverSlot=0, lastDown='';
+const inside=(el,x,y)=>{const r=el.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;};
+function boardCellAt(cx,cy){const r=board.getBoundingClientRect();return {x:Math.floor((cx-r.left)/cell),y:Math.floor((cy-r.top)/cell),inside:inside(board,cx,cy)};}
+function anchor(shape){const mx=Math.max(...shape.map(c=>c[0]))/2,my=Math.max(...shape.map(c=>c[1]))/2;return shape.reduce((b,c)=>Math.hypot(c[0]-mx,c[1]-my)<Math.hypot(b[0]-mx,b[1]-my)?c:b);}
+const NEAR=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
+function snap(shape,ox,oy,ignore=0){
+  ox=Math.max(0,Math.min(COLS-1-Math.max(...shape.map(c=>c[0])),ox));oy=Math.max(0,Math.min(ROWS-1-Math.max(...shape.map(c=>c[1])),oy));
+  for(const [dx,dy] of NEAR)if(fits(shape,ox+dx,oy+dy,ignore))return {ox:ox+dx,oy:oy+dy};return null;}
+function flashBad(file,ox,oy){const g=drawShape(board,file,cell,'ghost bad flash');Object.assign(g.style,{left:ox*cell+'px',top:oy*cell+'px'});setTimeout(()=>g.remove(),350);}
+const qIndex=id=>S.queue.findIndex(f=>f.id===id);
+function rotateQueued(id,why){const i=qIndex(id);if(i<0)return;S.queue[i].shape=rotate(S.queue[i].shape);const l=F(id);if(l)l.r++;diag('поворот: '+why);render();}
+
+function beginDrag(e,from,file,gx,gy,slotEl){
+  cancelDrag();
+  drag={from,id:file.id,file,gx,gy,off:{x:-(gx+.5)*cell,y:-(gy+.5)*cell},slotEl,shape0:file.shape,pointerId:e.pointerId,x0:e.clientX,y0:e.clientY,t0:performance.now(),moved:false,target:null,overTrash:false,
+    last:{clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType}};
+  drag.float=drawShape(document.body,file,cell,'float');drag.float.style.position='fixed';drag.float.style.display='none';
+  drag.ghost=drawShape(board,file,cell,'ghost');drag.ghost.style.display='none';
+  try{e.currentTarget.setPointerCapture(e.pointerId);}catch(err){}
+  try{window.focus();}catch(err){}
+  moveDrag(e);}
+function cleanup(d){d.float.remove();d.ghost.remove();trash.classList.remove('over');}
+function cancelDrag(){if(!drag)return;const d=drag;drag=null;clearTimeout(d.liftTimer);cleanup(d);
+  if(d.from==='queue'){const i=qIndex(d.id);if(i>=0)S.queue[i].shape=d.file.shape;}
+  if(d.from==='board'&&d.moved){const p=S.pieces.get(d.id);if(p){p.shape=d.shape0;setCells(p,p.id);}}
+  if(d.moved)ev('cancel',d.id);
+  render();}
+// v22 — the file in hand is positioned by its top-left corner (drag.off = corner − hold point), so it can turn
+// around its own centre. On touch the file floats above the finger.
+function holdPt(p){return {x:p.clientX,y:p.clientY-(p.pointerType==='touch'?1.3*cell:0)};}
+function moveDrag(e){if(!drag||e.pointerId!==drag.pointerId)return;
+  drag.last={clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType};
+  if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>(e.pointerType==='mouse'?6:14)&&!drag.moved){drag.moved=true;drag.movedAt=performance.now();if(drag.from==='board')S.slowDrags++;drag.float.style.display='';const l=F(drag.id);if(l)l.d++;
+    if(drag.from==='board')setCells(S.pieces.get(drag.id),0);render();}
+  if(drag.lift&&drag.lift.down){if(Math.hypot(e.clientX-drag.lift.down.x,e.clientY-drag.lift.down.y)>12)drag.lift.carry=true;else return;}
+  if(!drag.moved)return;
+  const h=holdPt(e),tl={x:h.x+drag.off.x,y:h.y+drag.off.y};
+  Object.assign(drag.float.style,{left:tl.x+'px',top:tl.y+'px'});
+  drag.overTrash=false;
+  const r=board.getBoundingClientRect(),bx=r.left+board.clientLeft,by=r.top+board.clientTop;
+  const ox=Math.round((tl.x-bx)/cell),oy=Math.round((tl.y-by)/cell);
+  drag.target=inside(board,h.x,h.y)?{ox,oy,spot:snap(drag.file.shape,ox,oy)}:null;
+  const t=drag.target;
+  if(t){const at=t.spot||t;Object.assign(drag.ghost.style,{display:'block',left:at.ox*cell+'px',top:at.oy*cell+'px'});drag.ghost.classList.toggle('bad',!t.spot);}else drag.ghost.style.display='none';}
+// rotate the file in hand by 90° around its own centre
+function rotateDrag(why){const d=drag;if(!d||!d.moved)return;const sh=d.file.shape,ns=rotate(sh),b0=shapeBox(sh,cell),b1=shapeBox(ns,cell);
+  const fl=d.float.getBoundingClientRect(),cx=fl.left+b0.w/2,cy=fl.top+b0.h/2,h=holdPt(d.last);
+  d.off={x:cx-b1.w/2-h.x,y:cy-b1.h/2-h.y};
+  d.file={...d.file,shape:ns};if(d.from==='board')S.pieces.get(d.id).shape=ns;const l=F(d.id);if(l)l.r++;
+  d.float.remove();d.ghost.remove();d.float=drawShape(document.body,d.file,cell,'float');d.float.style.position='fixed';d.ghost=drawShape(board,d.file,cell,'ghost');d.ghost.style.display='none';
+  const pid=d.pointerId;d.pointerId=d.last.pointerId;moveDrag(d.last);d.pointerId=pid;diag('поворот в руке: '+why);}
+// ---------- Juice (v31) ----------
+// Each effect has a meaning: bits flow while a robot reads a file; a finished file leaves in a defrag wave (blocks turn gold
+// one by one and click out) and its credits fly to the counter as a coin; a big RAW file bursts into pixels instead —
+// the loud effect is kept for rare moments. Visual only: the game state has already moved on when these play.
+const fxL=document.createElement('div');fxL.id='fx';document.body.append(fxL);
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function fxEl(cls,x,y,w,h,extra){const e=document.createElement('div');e.className=cls;Object.assign(e.style,{left:x+'px',top:y+'px'},w!=null?{width:w+'px',height:h+'px'}:{},extra||{});fxL.append(e);return e;}
+function boardXY(){const r=board.getBoundingClientRect();return {x:r.left+board.clientLeft,y:r.top+board.clientTop};}
+let bitAcc=0;
+function fxBits(dt){if(REDUCED||S?.state!=='play')return;bitAcc+=dt;if(bitAcc<0.16)return;bitAcc=0;
+  const o=boardXY();for(const p of S.pieces.values()){if(!p.proc)continue;const [x,y]=p.shape[Math.floor(Math.random()*p.shape.length)];
+    const e=fxEl('bit',o.x+(p.ox+x)*cell+cell*(.2+.6*Math.random()),o.y+(p.oy+y)*cell+cell*.35);e.textContent=Math.random()<.5?'0':'1';
+    e.animate([{transform:'translateY(0)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${(Math.random()-.5)*10}px,-${cell*.8}px)`,opacity:0}],{duration:750,easing:'ease-out'}).onfinish=()=>e.remove();}}
+function fxDone(p){if(REDUCED){sfx(p.type==='RAW'?'burst':'coin');haptic(p.type==='RAW'?'heavy':'light');return;}const o=boardXY(),col=TYPES[p.type].color,cs=cell,rad=Math.max(3,Math.round(cs*.18))+'px';
+  const cells=[...p.shape].sort((a,b)=>a[1]-b[1]||a[0]-b[0]).map(([x,y])=>({x:o.x+(p.ox+x)*cs,y:o.y+(p.oy+y)*cs}));
+  const cx=cells.reduce((a,c)=>a+c.x,0)/cells.length+cs/2,cy=cells.reduce((a,c)=>a+c.y,0)/cells.length+cs/2;
+  let coinAt;
+  if(p.type==='RAW'){ // pixel burst
+    cells.forEach(c=>{const f=fxEl('fxcell',c.x,c.y,cs,cs,{background:col,borderRadius:rad});
+      f.animate([{transform:'scale(1)',background:col},{transform:'scale(1.12)',background:'#fff',offset:.6},{transform:'scale(.2)',opacity:0}],{duration:160,easing:'ease-out'}).onfinish=()=>f.remove();
+      for(let k=0;k<7;k++){const a=Math.random()*Math.PI*2,sp=cs*(1+Math.random()*2.2),dx=Math.cos(a)*sp,dy=Math.sin(a)*sp-cs*1.2,s=cs*(.14+Math.random()*.12);
+        const q=fxEl('px',c.x+cs/2-s/2,c.y+cs/2-s/2,s,s,{background:Math.random()<.2?'#fff':col});
+        q.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx*.55}px,${dy*.6}px) rotate(${180*Math.random()}deg)`,opacity:1,offset:.45},{transform:`translate(${dx}px,${dy*.4+cs*2.2}px) rotate(${360*Math.random()}deg)`,opacity:0}],{duration:700+Math.random()*250,delay:100,easing:'cubic-bezier(.2,.6,.4,1)'}).onfinish=()=>q.remove();}});
+    const r=fxEl('ring',cx,cy,0,0,{borderColor:col});r.animate([{width:'0px',height:'0px',margin:'0',opacity:.8},{width:cs*3.4+'px',height:cs*3.4+'px',margin:-cs*1.7+'px 0 0 '+(-cs*1.7)+'px',opacity:0}],{duration:520,delay:90,easing:'ease-out'}).onfinish=()=>r.remove();
+    sfx('burst');haptic('heavy');coinAt=260;
+  }else{ // defrag wave
+    cells.forEach((c,i)=>{const d=i*70;const f=fxEl('fxcell',c.x+2,c.y+2,cs-4,cs-4,{background:col,borderRadius:rad});
+      f.animate([{transform:'scale(1)',background:col},{transform:'scale(1)',background:col,offset:.01},{transform:'scale(1.18)',background:'#ffd23d',offset:.35},{transform:'scale(0)',background:'#ffd23d',opacity:.7}],{duration:340,delay:d,easing:'ease-in-out',fill:'backwards'}).onfinish=()=>f.remove();
+      for(let j=0;j<4;j++){const a=j*Math.PI/2+.6,sp=fxEl('spark',c.x+cs/2-2.5,c.y+cs/2-2.5);
+        sp.animate([{transform:'rotate(45deg) translate(0,0)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${Math.cos(a)*cs*.7}px,${Math.sin(a)*cs*.7}px) rotate(45deg)`,opacity:0}],{duration:380,delay:d+120,easing:'ease-out',fill:'backwards'}).onfinish=()=>sp.remove();}
+      const g=fxEl('freed',c.x+3,c.y+3,cs-6,cs-6,{borderRadius:rad,opacity:0});
+      g.animate([{opacity:0},{opacity:.6},{opacity:0}],{duration:600,delay:d+260}).onfinish=()=>g.remove();
+      setTimeout(()=>{sfx('tick',i);haptic('tick');},d+110);});
+    coinAt=cells.length*70+200;
+  }
+  setTimeout(()=>fxCoin(cx,cy),coinAt);}
+function fxCoin(x0,y0){const chip=$('credits').closest('.chip'),r=chip.getBoundingClientRect(),x1=r.left+r.width*.3,y1=r.top+r.height/2;
+  const c=fxEl('coin',x0,y0),dx=x1-x0,dy=y1-y0,lift=Math.min(80,Math.abs(dy)*.25+30);
+  c.animate([{transform:'translate(0,0) scale(.4)'},{transform:`translate(${dx*.25}px,${dy*.25-lift}px) scale(1.1)`,offset:.3},{transform:`translate(${dx*.65}px,${dy*.65-lift*.6}px) scale(1)`,offset:.65},{transform:`translate(${dx}px,${dy}px) scale(.7)`}],{duration:520,easing:'ease-in'}).onfinish=()=>{c.remove();
+    chip.animate([{transform:'scale(1)'},{transform:'scale(1.14)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});sfx('coin');haptic('light');};}
+
+// v33: the placed file settles (spring + flash); the intake panel shakes on overflow; the shift ends with a moment —
+// confetti for a win, memory powering down row by row for a loss — before the dialog appears.
+function fxPlace(id){if(REDUCED)return;requestAnimationFrame(()=>{const el=board.querySelector(`.piece[data-id="${id}"]`);if(!el)return;
+  el.querySelectorAll('.cell').forEach((c,i)=>c.animate([{transform:'scale(1.16)',filter:'brightness(1.7)'},{transform:'scale(.94)',filter:'brightness(1.15)',offset:.45},{transform:'scale(1.03)',offset:.75},{transform:'scale(1)',filter:'brightness(1)'}],{duration:300,delay:i*12,easing:'ease-out'}));});}
+function fxShake(px){if(REDUCED)return;const t=$('tray');t.animate([{transform:'translateX(0)'},{transform:`translateX(${-px}px)`},{transform:`translateX(${px}px)`},{transform:`translateX(${-px*.6}px)`},{transform:`translateX(${px*.4}px)`},{transform:'translateX(0)'}],{duration:px>4?380:220,easing:'ease-out'});}
+const fxTop=document.createElement('div');fxTop.id='fxTop';document.body.append(fxTop);
+function fxEnd(win,show){if(REDUCED){show();return;}
+  if(win){const cols=Object.values(TYPES).map(t=>t.color).concat(['#ffd23d','#fff7e6']),W=innerWidth,H=innerHeight;
+    for(let k=0;k<70;k++){const s=6+Math.random()*7,x0=W*(.15+.7*Math.random()),e=document.createElement('div');e.className='conf';
+      Object.assign(e.style,{left:x0+'px',top:H+10+'px',width:s+'px',height:s*(Math.random()<.5?1:1.8)+'px',background:cols[k%cols.length],borderRadius:Math.random()<.3?'50%':'2px'});fxTop.append(e);
+      const up=H*(.45+.45*Math.random()),dx=(Math.random()-.5)*W*.5,rot=(Math.random()-.5)*900,dur=1700+Math.random()*900;
+      e.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx*.6}px,${-up}px) rotate(${rot*.5}deg)`,offset:.45,opacity:1},{transform:`translate(${dx}px,${-up+H*.35}px) rotate(${rot}deg)`,opacity:0}],{duration:dur,delay:Math.random()*250,easing:'cubic-bezier(.15,.7,.4,1)'}).onfinish=()=>e.remove();}
+    setTimeout(show,1100);}
+  else{const pieces=[...board.querySelectorAll('.piece:not(.ghost)')];
+    pieces.forEach(el=>{const top=parseFloat(el.style.top)||0;el.querySelectorAll('.cell').forEach(c=>{const y=top+(parseFloat(c.style.top)||0);
+      c.animate([{filter:'none'},{filter:'grayscale(1) brightness(.45)'}],{duration:260,delay:40+y/cell*55,fill:'forwards',easing:'ease-in'});});});
+    board.animate([{boxShadow:'0 4px 0 #14123a'},{boxShadow:'0 0 0 3px #ff5a5a,0 4px 0 #14123a',offset:.15},{boxShadow:'0 4px 0 #14123a'}],{duration:900});
+    setTimeout(show,950);}}
+
+// ---------- Clusters (v43) ----------
+// Decisions (author, 2026-10-21): two or more files of one type touching by a side form a cluster. The cluster goes to
+// work as a whole when its oldest file's turn comes (so placing a fresh file next to an old one moves it up the queue);
+// it takes CL_TIME of the files' total time but holds all its memory until it is done. Free robots specialised in that
+// type join a running cluster (×1.8 with two, ×2.5 with three); «Любые» do not. A file laid against a cluster already in
+// work waits for its own turn. Hidden viruses inside a cluster wake when it starts and are left behind.
+const CL_TIME=0.85, CL_SPEED=[1,1.8,2.5], CL_MAXBOTS=3;
+function runningProcs(){const out=new Set();for(const p of S.pieces.values())if(p.proc)out.add(p.proc);return [...out];}
+function clusterOf(p,free){const ok=new Set(free.filter(q=>q.type===p.type&&!(q.vir&&q.awake)).map(q=>q.id));ok.add(p.id);
+  const seen=new Set([p.id]),out=[p],stack=[p];while(stack.length){const c=stack.pop();for(const n of neighbours(c))if(!seen.has(n.id)&&ok.has(n.id)){seen.add(n.id);out.push(n);stack.push(n);}}return out;}
+// clusters as they stand now (idle files only), for the outline and the «×N» tag
+function clustersNow(){const free=[...S.pieces.values()].filter(q=>!q.proc&&!(q.vir&&q.awake)&&!(drag?.moved&&drag.from==='board'&&drag.id===q.id));const res=new Map(),done=new Set();
+  for(const q of free.sort((a,b)=>a.order-b.order)){if(done.has(q.id))continue;const g=clusterOf(q,free);g.forEach(x=>done.add(x.id));if(g.length>1)for(const x of g)res.set(x.id,{n:g.length,lead:g[0].id===q.id?q.id:q.id});
+    if(g.length>1)res.get(q.id).isLead=true;}return res;}
+// v44: the finale grows with the cluster — ×2–3 the defrag wave, ×4 a defrag bar to 100%, ×5+ «+N FREE»;
+// callouts: COMBO / GREAT COMBO / SUPER COMBO / MEGA DEFRAG!, plus COMBO HIT ×k (clusters within 4 s) and OVERCLOCK (3 robots)
+function comboWord(n){return n>=5?['MEGA DEFRAG!','mega']:n===4?['SUPER COMBO','super']:n===3?['GREAT COMBO','great']:['COMBO','small'];}
+function fxCallout(lines,tier,x,y){const e=fxEl('callout '+tier,x,y);e.innerHTML=lines.map((l,i)=>`<div class="${i?'sub '+(l.cls||''):'main'}">${l.t}</div>`).join('');
+  const sc=tier==='mega'?1.3:tier==='super'?1.12:tier==='small'?.8:1;
+  e.animate([{transform:`translate(-50%,-50%) scale(${sc*.4})`,opacity:0},{transform:`translate(-50%,-50%) scale(${sc*1.12})`,opacity:1,offset:.2},{transform:`translate(-50%,-60%) scale(${sc})`,opacity:1,offset:.75},{transform:`translate(-50%,-90%) scale(${sc*.96})`,opacity:0}],{duration:tier==='mega'?1900:1500,easing:'ease-out'}).onfinish=()=>e.remove();}
+function fxCluster(ms,nbots=1){sfx('burst');sfx('combo',ms.length);haptic('heavy');
+  const n=ms.length;S.streak=S.time-(S.lastCombo??-99)<=4?(S.streak||1)+1:1;S.lastCombo=S.time;if(S.streak>1)ev('combo-hit',S.streak);if(nbots>=3)ev('overclock',n);
+  const [word,tier]=comboWord(n),lines=[{t:word}];if(S.streak>1)lines.push({t:'COMBO HIT ×'+S.streak});if(nbots>=3)lines.push({t:'OVERCLOCK!',cls:'ok'});
+  const o=boardXY(),cells=[];for(const p of ms)for(const [x,y] of p.shape)cells.push({x:o.x+(p.ox+x)*cell,y:o.y+(p.oy+y)*cell,col:TYPES[p.type].color});
+  // order from the oldest file outwards (wave order)
+  const L0=cells[0];cells.sort((a,b)=>Math.hypot(a.x-L0.x,a.y-L0.y)-Math.hypot(b.x-L0.x,b.y-L0.y));
+  const cx=cells.reduce((a,c)=>a+c.x,0)/cells.length+cell/2,cy=cells.reduce((a,c)=>a+c.y,0)/cells.length+cell/2;
+  const br=board.getBoundingClientRect(),calloutAt=()=>fxCallout(lines,tier,br.left+br.width/2,Math.min(br.bottom-cell*1.2,Math.max(br.top+cell*1.2,cy+cell*1.6)));
+  if(REDUCED){calloutAt();fxCoin(cx,cy);return;}
+  if(n<=3){cells.forEach((c,i)=>{const d=i*55,f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
+      f.animate([{transform:'scale(1)',background:c.col},{transform:'scale(1)',background:c.col,offset:.01},{transform:'scale(1.18)',background:'#ffd23d',offset:.35},{transform:'scale(0)',background:'#ffd23d',opacity:.7}],{duration:340,delay:d,fill:'backwards'}).onfinish=()=>f.remove();
+      for(let j=0;j<4;j++){const a=j*Math.PI/2+.6,sp=fxEl('spark',c.x+cell/2-2.5,c.y+cell/2-2.5);sp.animate([{transform:'rotate(45deg)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${Math.cos(a)*cell*.7}px,${Math.sin(a)*cell*.7}px) rotate(45deg)`,opacity:0}],{duration:380,delay:d+120,fill:'backwards'}).onfinish=()=>sp.remove();}
+      setTimeout(()=>sfx('tick',Math.min(i,7)),d+110);});
+    const end=cells.length*55+260;cells.forEach(c=>{const g=fxEl('freed',c.x+3,c.y+3,cell-6,cell-6,{borderRadius:'6px',opacity:0});g.animate([{opacity:0},{opacity:.8},{opacity:0}],{duration:500,delay:end}).onfinish=()=>g.remove();});
+    setTimeout(()=>{calloutAt();fxCoin(cx,cy);},end);return;}
+  if(n===4){// defrag bar to 100%
+    const m=cells.length,bw=Math.min(br.width-24,m*cell*.75),sw=bw/m,bx=Math.min(br.right-bw-12,Math.max(br.left+12,cx-bw/2)),by=Math.min(br.bottom-sw-30,Math.max(br.top+30,cy-sw/2));
+    const frame=fxEl('dbar',bx-5,by-5,bw+10,sw+10);frame.animate([{opacity:0},{opacity:1}],{duration:200,delay:300,fill:'backwards'});
+    const pct=fxEl('dpct',bx+bw/2,by-8);pct.textContent='0%';
+    cells.forEach((c,i)=>{const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'5px'}),tx=bx+i*sw+1.5,ty=by+1.5,s=(sw-3)/(cell-4);
+      f.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${tx-c.x-2}px,${ty-c.y-2}px) scale(${s})`}],{duration:420,easing:'cubic-bezier(.3,.7,.3,1)',fill:'forwards'});
+      f.style.transformOrigin='0 0';const at=480+(i+.5)/m*560;
+      setTimeout(()=>{f.style.background='#ffd23d';f.style.boxShadow='0 0 10px #ffd23d';pct.textContent=Math.round((i+1)/m*100)+'%';sfx('tick',Math.min(7,Math.floor(i/m*8)));},at);
+      setTimeout(()=>{f.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards'}).onfinish=()=>f.remove();},1250);});
+    setTimeout(()=>{pct.textContent='DONE';pct.classList.add('done');haptic('success');},1060);
+    setTimeout(()=>{frame.animate([{opacity:1,background:'rgba(255,255,255,.6)'},{opacity:0}],{duration:300}).onfinish=()=>{frame.remove();pct.remove();};
+      for(let k=0;k<m*3;k++){const q=fxEl('px',bx+Math.random()*bw,by+sw/2,5,5,{background:Math.random()<.25?'#fff':'#ffd23d'});const a=Math.random()*Math.PI*2,sp=cell*(.8+Math.random()*1.6);
+        q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp+cell}px)`,opacity:0}],{duration:600}).onfinish=()=>q.remove();}
+      calloutAt();fxCoin(bx+bw/2,by);},1260);return;}
+  // ×5+: memory freed — cells collapse into «+N FREE», it pops, the freed area sparkles
+  cells.forEach(c=>{const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
+    f.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${cx-cell/2-c.x}px,${cy-cell/2-c.y}px) scale(.45)`,background:'#bff5e4'}],{duration:420,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();});
+  setTimeout(()=>{const blk=fxEl('freeblk',cx,cy);blk.textContent='+'+cells.length+' FREE';haptic('success');
+    blk.animate([{transform:'translate(-50%,-50%) scale(.3)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.3},{transform:'translate(-50%,-50%) scale(1)',offset:.55},{transform:'translate(-50%,-50%) scale(1.06)',offset:.75},{transform:'translate(-50%,-50%) scale(1.6)',opacity:0}],{duration:900}).onfinish=()=>blk.remove();
+    setTimeout(()=>{cells.forEach(c=>{const d=Math.hypot(c.x+cell/2-cx,c.y+cell/2-cy)/cell*60,g=fxEl('freed green',c.x+3,c.y+3,cell-6,cell-6,{borderRadius:'6px',opacity:0});g.animate([{opacity:0},{opacity:.9},{opacity:0}],{duration:600,delay:d}).onfinish=()=>g.remove();});
+      for(let k=0;k<cells.length*2;k++){const q=fxEl('px',cx-3,cy-3,6,6,{background:Math.random()<.4?'#fff':'#9cff6b'});const a=Math.random()*Math.PI*2,sp=cell*(1+Math.random()*2.5);
+        q.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*sp}px,${Math.sin(a)*sp}px)`,opacity:0}],{duration:700}).onfinish=()=>q.remove();}
+      calloutAt();fxCoin(cx,cy);},650);},420);}
+function fxSpecial(text,kind,p){const br=board.getBoundingClientRect();let x=br.left+br.width/2,y=br.top+br.height*.42;
+  if(p){const o=boardXY();x=o.x+(p.ox+.5)*cell;y=Math.max(br.top+cell,o.y+(p.oy-.5)*cell);}
+  sfx(kind==='clean'?'win':'buy');haptic('success');if(REDUCED)return;fxCallout([{t:text}],kind==='clean'?'mega':'small '+kind,x,y);
+  if(kind==='clean'){const g=fxEl('cleanglow',br.left,br.top,br.width,br.height);g.animate([{opacity:0},{opacity:.9},{opacity:0}],{duration:1100}).onfinish=()=>g.remove();}}
+
+// ---------- Viruses and the AV robot (v34) ----------
+// Decisions (author, 2026-10-21): no trash; a threat is announced ahead («Угроза: в потоке вирус») and viruses arrive only
+// inside those windows, looking like ordinary files. In memory a virus wakes after V_WAKE s and then infects one side
+// neighbour every V_SPREAD s; infected files pass it on too, so it is a chain — an empty cell stops it («просека»).
+// Infected files take ×V_SLOW to process and pay nothing; processing heals. A robot set to AV checks intake files
+// (V_SCAN s each, ✓) and deletes a found virus right in the queue (+V_BONUS) — but while scanning it does no memory work;
+// with nothing to scan it takes awake viruses first, then works like «Любые».
+const V_WAKE=[5,30], V_SPREAD=5, V_SLOW=2, V_SCAN=1, V_AV_KILL=1, V_BONUS=3, V_COST_EVERY=2, V_WIN=25, V_MAXCELLS=4;
+const BUG_SVG='<svg viewBox="0 0 20 20" width="100%" height="100%" aria-hidden="true"><ellipse cx="10" cy="11.5" rx="5" ry="6" fill="#14123a"/><circle cx="10" cy="5" r="3" fill="#14123a"/><path d="M5 9 1.5 7M5 12H1M5 15l-3 2.5M15 9l3.5-2M15 12h4M15 15l3 2.5M8.5 3 7 .8M11.5 3 13 .8" stroke="#14123a" stroke-width="1.6" stroke-linecap="round"/><path d="M10 6v11" stroke="#ff3d7f" stroke-width="1.2"/></svg>';
+function prefColor(pf){return pf==='AV'?'var(--av)':TYPES[pf].color;}
+function planThreats(){const a=50+Math.random()*3,b=80+Math.random()*3; /* windows 25 s each, a short calm in between */return [a,b].map(t=>({start:t,end:t+V_WIN,left:1+(Math.random()<.5?1:0),on:false}));}
+function threatNow(){return S?.threats?.find(w=>S.time>=w.start&&S.time<w.end);}
+function maybeVirus(f,interval){const w=threatNow();if(w){f.sus=1;const l=F(f.id);if(l)l.sus=1;}if(!w||w.left<=0||S.time<w.start+3)return f;
+  const remain=Math.max(1,(w.end-S.time)/Math.max(.5,interval));if(Math.random()>=w.left/remain)return f;
+  w.left--;f.vir=true;S.vs.arrived++;
+  if(f.shape.length>V_MAXCELLS){const pool=['TMP','DOC','PNG'].flatMap(t=>TYPES[t].shapes.filter(sh=>sh.length<=V_MAXCELLS).map(sh=>({t,sh})));const c=pool[Math.floor(Math.random()*pool.length)];f.type=c.t;f.shape=c.sh.map(x=>[...x]);}
+  const l=F(f.id);if(l){l.vir=1;l.ty=f.type;}ev('virus-arrive',f.id);return f;}
+function pieceReward(p){if(p.vir)return V_BONUS;return p.infected?0:TYPES[p.type].reward;}
+function neighbours(p){const ids=new Set();for(const [x,y] of p.shape){const gx=p.ox+x,gy=p.oy+y;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const v=S.grid[gy+dy]?.[gx+dx];if(v&&v!==p.id)ids.add(v);}}return [...ids].map(id=>S.pieces.get(id)).filter(Boolean);}
+function virusTick(dt){
+  // AV costs credits for as long as it is switched on
+  const avs=S.bots.filter(b=>b.pref==='AV').length;
+  if(avs){S.avAcc=(S.avAcc||0)+dt;while(S.avAcc>=V_COST_EVERY){S.avAcc-=V_COST_EVERY;const c=Math.min(S.credits,avs);if(c>0){S.credits-=c;S.vs.avCost+=c;fxCost(c);}}}else S.avAcc=0;
+  // reminder: the threat is over and no awake virus is left, but a robot is still on AV
+  const nag=avs>0&&S.threats.some(w=>w.on)&&!threatNow()&&![...S.pieces.values()].some(p=>p.vir&&p.awake)&&!S.queue.slice(0,VIS).some(f=>f.sus&&!f.scan);
+  if(nag&&!S.avNag){S.avNag=S.time;ev('av-nag');}else if(!nag&&S.avNag){ev('av-nag-off',r1(S.time-S.avNag));S.avNag=0;}
+  // announce a threat window
+  for(const [i,w] of S.threats.entries()){if(!w.on&&S.time>=w.start){w.on=true;ev('threat',i+1,w.left);sfx('threat');haptic('warning');}}
+  for(const p of [...S.pieces.values()]){if(drag?.moved&&drag.from==='board'&&drag.id===p.id)continue;
+    if(p.vir&&!p.awake&&!p.proc&&S.time>=p.wakeAt)wakeVirus(p,'time');
+    const spreading=(p.vir&&p.awake&&!p.proc)||(p.infected&&!p.proc);
+    if(spreading&&S.time>=p.spreadAt){const cand=neighbours(p).filter(q=>!q.vir&&!q.infected&&!q.proc&&!(drag?.moved&&drag.id===q.id));
+      if(cand.length){const q=cand[Math.floor(Math.random()*cand.length)];q.infected=1;q.spreadAt=S.time+V_SPREAD;S.vs.infected++;const l=F(q.id);if(l)l.inf=r1(S.time);ev('infect',p.id,q.id);fxInfect(q,p);sfx('infect');haptic('tick');p.spreadAt=S.time+V_SPREAD;}
+      else p.spreadAt=S.time+1;}}}
+function wakeVirus(p,why,bot){p.awake=1;p.spreadAt=S.time+V_SPREAD;S.vs.woke++;ev('virus-wake',p.id,why,bot);fxVirusWake(p);sfx('glitch');haptic('warning');}
+function avStartScan(b){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
+  for(let i=0;i<Math.min(VIS,S.queue.length);i++){const f=S.queue[i];if(!f.sus||f.scan||taken.has(f.id)||(drag&&drag.id===f.id))continue;b.scan={id:f.id,t:0,dur:V_SCAN};b.busy=null;return true;}return false;}
+function avTick(dt){for(const b of S.bots){if(!b.scan)continue;if(b.pref!=='AV'){b.scan=null;continue;}
+  const i=S.queue.findIndex(f=>f.id===b.scan.id),f=S.queue[i];if(!f||i>=VIS||(drag&&drag.id===f.id)){b.scan=null;continue;}
+  b.scan.t+=dt;if(b.scan.t<b.scan.dur)continue;b.scan=null;S.vs.scanned++;
+  if(f.vir){S.queue.splice(i,1);S.credits+=V_BONUS;S.vs.avDel++;const l=F(f.id);if(l)l.out='av-deleted';ev('av-del',f.id,b.id);fxAvDel(slots[i]);sfx('avdel');haptic('success');}
+  else{f.scan=1;ev('scan',f.id,b.id);sfx('scan');}}}
+function renderVirusUi(){const lane=$('lane');let th=lane.querySelector('.threat');if(!th){th=document.createElement('div');th.className='threat';th.hidden=true;th.setAttribute('role','status');th.innerHTML=`<span class="ic">${BUG_SVG}</span><span>Угроза: в потоке вирус</span><b></b>`;lane.append(th);}
+  const w=S.state==='over'?null:threatNow(),live=S.state==='over'?0:[...S.pieces.values()].filter(p=>p.vir&&p.awake).length,hasAV=S.bots.some(b=>b.pref==='AV');
+  const msg=live?(hasAV?`AV удаляет вирус${live>1?' ('+live+')':''}`:`Вирус в памяти${live>1?' ('+live+')':''} — включите AV`):w?'Угроза: в потоке вирус':'';
+  th.hidden=!msg;th.classList.toggle('live',!!live);if(msg){const sp=th.querySelector('span:not(.ic)');if(sp.textContent!==msg)sp.textContent=msg;th.querySelector('b').textContent=!live&&w?Math.ceil(w.end-S.time)+' с':'';}
+  slots.forEach((sl,i)=>{const f=S.queue[i];const scanning=!!(f&&S.bots.some(b=>b.scan?.id===f.id));
+    let bd=sl.querySelector('.sbadge'),beam=sl.querySelector('.scanbeam');
+    const mode=!f?'':f.scan?'ok':(f.sus&&!scanning)?'q':'';
+    if(mode){if(!bd){bd=document.createElement('div');sl.append(bd);}bd.className='sbadge '+mode;bd.textContent=mode==='ok'?'✓':'?';}else bd?.remove();
+    sl.classList.toggle('scanning',scanning);if(scanning&&!beam){beam=document.createElement('div');beam.className='scanbeam';sl.append(beam);}else if(!scanning)beam?.remove();});}
+function fxVirusWake(p){if(REDUCED)return;requestAnimationFrame(()=>{const el=board.querySelector(`.piece[data-id="${p.id}"]`);el?.querySelectorAll('.cell').forEach(c=>c.animate([{transform:'translate(0,0)',filter:'hue-rotate(0)'},{transform:'translate(-3px,1px)',filter:'hue-rotate(90deg) brightness(1.6)'},{transform:'translate(3px,-1px)'},{transform:'translate(0,0)',filter:'hue-rotate(0)'}],{duration:420,iterations:2}));});
+  vbits(p,10);}
+function fxInfect(q,src){if(REDUCED)return;if(src)fxStream(src,q);requestAnimationFrame(()=>{const el=board.querySelector(`.piece[data-id="${q.id}"]`);el?.querySelectorAll('.cell').forEach(c=>c.animate([{boxShadow:'0 0 0 0 rgba(255,61,127,0)'},{boxShadow:'0 0 16px 4px rgba(255,61,127,.9)'},{boxShadow:'0 0 0 0 rgba(255,61,127,0)'}],{duration:600}));});}
+function fxStream(a,b){const o=boardXY(),ctr=p=>{const n=p.shape.length;return [o.x+(p.ox+p.shape.reduce((s,c)=>s+c[0],0)/n+.5)*cell,o.y+(p.oy+p.shape.reduce((s,c)=>s+c[1],0)/n+.5)*cell];};
+  const [sx,sy]=ctr(a),[tx,ty]=ctr(b),lift=cell*.6;
+  for(let i=0;i<7;i++){const e=fxEl('vbit',sx,sy);e.textContent=i%2?'1':'0';
+    e.animate([{transform:'translate(0,0)',opacity:0},{transform:`translate(${(tx-sx)*.5}px,${(ty-sy)*.5-lift}px)`,opacity:1,offset:.5},{transform:`translate(${tx-sx}px,${ty-sy}px)`,opacity:.2}],{duration:620,delay:i*70,easing:'ease-in-out',fill:'backwards'}).onfinish=()=>e.remove();}}
+function vbits(p,n){const o=boardXY();for(let k=0;k<n;k++){const [x,y]=p.shape[Math.floor(Math.random()*p.shape.length)];const e=fxEl('vbit',o.x+(p.ox+x)*cell+cell*(.2+.6*Math.random()),o.y+(p.oy+y)*cell+cell*.4);e.textContent=Math.random()<.5?'0':'1';
+  e.animate([{transform:'translate(0,0)',opacity:0},{opacity:1,offset:.15},{transform:`translate(${(Math.random()-.5)*cell}px,${-cell*(.5+Math.random()*.6)}px)`,opacity:0}],{duration:700+Math.random()*300,delay:Math.random()*150}).onfinish=()=>e.remove();}}
+function fxVirusDone(p){sfx('avdel');haptic('medium');if(REDUCED)return;const o=boardXY();
+  p.shape.forEach(([x,y],i)=>{const f=fxEl('fxcell',o.x+(p.ox+x)*cell+2,o.y+(p.oy+y)*cell+2,cell-4,cell-4,{background:'var(--vir)',borderRadius:'6px'});
+    f.animate([{transform:'scale(1)',opacity:1},{transform:'scale(1.1) skewX(12deg)',opacity:1,offset:.3},{transform:'scale(.1) skewX(-20deg)',opacity:0}],{duration:380,delay:i*40}).onfinish=()=>f.remove();});vbits(p,12);}
+function fxCost(c){if(REDUCED)return;const chip=$('credits').closest('.chip'),r=chip.getBoundingClientRect();const e=fxEl('vbit',r.left+r.width*.55,r.bottom-4);e.style.color='#ff9cbf';e.style.fontSize='13px';e.textContent='−'+c;
+  e.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(16px)',opacity:0}],{duration:800}).onfinish=()=>e.remove();}
+function fxAvDel(sl){if(REDUCED||!sl)return;sl.animate([{boxShadow:'0 0 0 0 rgba(255,61,127,0)'},{boxShadow:'0 0 0 4px #ff3d7f, 0 0 22px #ff3d7f'},{boxShadow:'0 0 0 0 rgba(255,61,127,0)'}],{duration:650});
+  const r=sl.getBoundingClientRect();for(let k=0;k<8;k++){const e=fxEl('vbit',r.left+r.width*(.2+.6*Math.random()),r.top+r.height*.5);e.textContent=Math.random()<.5?'0':'1';e.animate([{opacity:1},{transform:`translate(${(Math.random()-.5)*50}px,${-20-Math.random()*30}px)`,opacity:0}],{duration:650}).onfinish=()=>e.remove();}}
+
+// ---------- Sound, music and vibration (v32) ----------
+// Direction (author, 2026-10-21): light and calm — soft «plastic» pops and marimba mixed with clean hi-tech glass and air;
+// music lo-fi or synthwave pulse, quiet under the game. Frequent sounds are the softest. All synthesized (Web Audio),
+// no files. Vibration goes to the iPhone app through the same bridge as the logs. Settings live in pause and are remembered.
+const AUD={sfx:true,music:'lofi',haptics:true};
+try{Object.assign(AUD,JSON.parse(localStorage.getItem('defrag-audio')||'{}'));}catch(e){}
+function audioSave(){try{localStorage.setItem('defrag-audio',JSON.stringify(AUD));}catch(e){}}
+let AC=null,OUT=null,SFX=null,MUS=null,MF=null,REV=null;
+function audioInit(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C();
+    OUT=AC.createDynamicsCompressor();OUT.threshold.value=-14;OUT.ratio.value=4;OUT.connect(AC.destination);
+    SFX=AC.createGain();SFX.gain.value=.8;SFX.connect(OUT);MUS=AC.createGain();MUS.gain.value=.45;MF=AC.createBiquadFilter();MF.type='lowpass';MF.frequency.value=18000;MF.Q.value=.7;MUS.connect(MF);MF.connect(OUT);
+    REV=AC.createConvolver();const len=AC.sampleRate*1.3,b=AC.createBuffer(2,len,AC.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
+    REV.buffer=b;const rg=AC.createGain();rg.gain.value=.22;REV.connect(rg);rg.connect(OUT);}
+  if(AC.state==='suspended')AC.resume();}catch(e){}}
+function tone(f,{t=0,d=.12,type='sine',g=.25,a=.004,f2=null,wet=0,detune=0,bus=SFX}={}){if(!AC)return;const o=AC.createOscillator(),v=AC.createGain(),s=AC.currentTime+t;
+  o.type=type;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),s+d);o.detune.value=detune;
+  v.gain.setValueAtTime(0,s);v.gain.linearRampToValueAtTime(g,s+a);v.gain.exponentialRampToValueAtTime(.0001,s+d);
+  o.connect(v);v.connect(bus);if(wet){const w=AC.createGain();w.gain.value=wet;v.connect(w);w.connect(REV);}o.start(s);o.stop(s+d+.05);}
+const NOISE={};
+function noise({t=0,d=.15,g=.2,hp=0,lp=12000,f2=null,wet=0,bus=SFX}={}){if(!AC)return;if(!NOISE.b){const len=AC.sampleRate,b=AC.createBuffer(1,len,AC.sampleRate),x=b.getChannelData(0);for(let i=0;i<len;i++)x[i]=Math.random()*2-1;NOISE.b=b;}
+  const src=AC.createBufferSource();src.buffer=NOISE.b;const s=AC.currentTime+t,fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(lp,s);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,s+d);
+  const h=AC.createBiquadFilter();h.type='highpass';h.frequency.value=hp;const v=AC.createGain();v.gain.setValueAtTime(g,s);v.gain.exponentialRampToValueAtTime(.0001,s+d);
+  src.connect(fl);fl.connect(h);h.connect(v);v.connect(bus);if(wet){const w=AC.createGain();w.gain.value=wet;v.connect(w);w.connect(REV);}src.start(s,Math.random()*.5);src.stop(s+d+.05);}
+const MID=n=>440*Math.pow(2,(n-69)/12),PENTA=[84,86,88,91,93,96,98,100];
+const mar=(f,t,g=.24,bus=SFX)=>{tone(f,{t,d:.35,g,wet:.3,bus});tone(f*4,{t,d:.06,g:g*.25,bus});};
+const glass=(f,t,g=.12,bus=SFX)=>{tone(f,{t,d:.6,g,wet:.6,bus});tone(f*2.01,{t,d:.3,g:g*.4,wet:.6,bus});};
+const SOUNDS={
+  place:()=>{tone(520,{d:.12,g:.28,f2:180});noise({d:.025,g:.06,hp:3500});},
+  rotate:()=>{noise({d:.09,g:.07,hp:900,lp:7000,f2:1800});tone(880,{type:'triangle',d:.045,g:.07,f2:640});},
+  tick:i=>glass(MID(PENTA[Math.min(i,7)]),0,.07),
+  coin:()=>{mar(MID(88),0,.16);glass(MID(93),.07,.08);},
+  burst:()=>{tone(70,{d:.4,g:.42,f2:35});noise({d:.55,g:.12,hp:3500,wet:.5});[96,100,103].forEach((n,i)=>glass(MID(n),.05+i*.045,.06));},
+  buy:()=>{tone(300,{d:.4,g:.1,f2:1100,type:'sawtooth',wet:.3});glass(MID(91),.36,.12);mar(MID(79),.36,.14);},
+  ready:()=>glass(MID(96),0,.06),
+  alarm:()=>{tone(700,{d:.3,g:.12,f2:520,wet:.2});tone(700,{t:.42,d:.3,g:.12,f2:520,wet:.2});},
+  beat:()=>{tone(92,{d:.22,g:.22,f2:60});},
+  bad:()=>{tone(220,{type:'triangle',d:.16,g:.16,f2:150});},
+  trash:()=>{noise({d:.3,g:.16,lp:3500,f2:250});tone(160,{t:.05,d:.2,g:.16,f2:90});},
+  pref:()=>tone(1150,{type:'triangle',d:.04,g:.06}),
+  threat:()=>{tone(MID(76),{d:.35,g:.11,wet:.4});tone(MID(71),{t:.3,d:.45,g:.11,wet:.4});glass(MID(95),.05,.05);},
+  glitch:()=>{noise({d:.18,g:.18,hp:1200,lp:6000});tone(180,{type:'sawtooth',d:.14,g:.08,f2:90,detune:30});tone(1900,{type:'square',t:.05,d:.04,g:.04});},
+  infect:()=>{noise({d:.08,g:.08,hp:2500});tone(260,{type:'sawtooth',d:.1,g:.05,f2:180});},
+  scan:()=>glass(MID(100),0,.04),
+  boost:()=>{glass(MID(98),0,.05);glass(MID(103),.06,.05);},
+  slowIn:()=>{tone(900,{d:.45,g:.12,f2:260,wet:.4});noise({d:.4,g:.06,hp:600,lp:5000,f2:800});},
+  slowOut:()=>{tone(300,{d:.3,g:.1,f2:820,wet:.3});},
+  combo:n=>{[0,4,7,12,16].slice(0,Math.min(5,1+n)).forEach((k,i)=>mar(MID(76+k),.08+i*.07,.18));glass(MID(100),.12+Math.min(5,1+n)*.07,.08);},
+  avdel:()=>{noise({d:.12,g:.1,hp:2000});tone(500,{d:.18,g:.14,f2:140});glass(MID(91),.1,.08);},
+  win:()=>{[[72,0],[76,.14],[79,.28],[84,.42]].forEach(([n,t])=>mar(MID(n),t,.22));[84,88,91].forEach(n=>glass(MID(n),.6,.09));tone(MID(48),{t:.42,d:.9,g:.2,wet:.3});},
+  lose:()=>{tone(400,{d:1,g:.14,f2:80,type:'triangle',wet:.3});noise({t:.2,d:.8,g:.07,lp:1200,f2:150});},
+};
+function sfx(name,arg){if(!AUD.sfx||!AC||AC.state!=='running')return;try{SOUNDS[name]?.(arg);}catch(e){}}
+function haptic(style){if(!AUD.haptics||!HAPT)return;try{if(NATIVE){window.webkit.messageHandlers.defrag.postMessage({type:'haptic',style});return;}const h=TG.HapticFeedback;
+  if(style==='tick')h.selectionChanged();else if(style==='success'||style==='warning'||style==='error')h.notificationOccurred(style);else h.impactOccurred(['light','medium','heavy','soft','rigid'].includes(style)?style:'light');}catch(e){}}
+function sfxEvent(a){const [k,b,c,d]=a;
+  if(k==='drop'){if(d==='placed'||d==='moved'){sfx('place');haptic('light');fxPlace(c);}else if(d==='rotate'){sfx('rotate');haptic('soft');}else if(d==='no-room'||d==='rotate-blocked'){sfx('bad');haptic('tick');}}
+  else if(k==='rot-btn'){if(c){sfx('rotate');haptic('soft');}}
+  else if(k==='rotate-key'){sfx('rotate');}
+  else if(k==='buy'){sfx('buy');haptic('success');}
+  else if(k==='buy-ready'){sfx('ready');}
+  else if(k==='overflow'){sfx('alarm');haptic('warning');beatAcc=0;fxShake(7);}
+  else if(k==='trash'){sfx('trash');haptic('medium');}
+  else if(k==='pref'){sfx('pref');haptic('tick');}}
+let beatAcc=0;
+function sfxTick(dt){if(S?.over){beatAcc+=dt;if(beatAcc>=1){beatAcc=0;sfx('beat');fxShake(2.5);}}}
+// music: short loops scheduled a little ahead; quiet under the game
+const LOOPS={
+  lofi:{bpm:84,step:(i,t)=>{const ch=[[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]][Math.floor(i/16)%4];
+    if(i%16===0)ch.forEach(n=>tone(MID(n),{t,d:2.6,g:.03,a:.3,wet:.5,type:'triangle',bus:MUS}));if(i%4===2)mar(MID(ch[(i>>2)%4]+12),t,.05,MUS);
+    if(i%8===0)tone(70,{t,d:.3,g:.16,f2:45,bus:MUS});if(i%8===4)noise({t,d:.08,g:.035,hp:3000,lp:7000,bus:MUS});}},
+  synth:{bpm:100,step:(i,t)=>{const root=[45,41,43,40][Math.floor(i/16)%4];
+    tone(MID(root),{t,type:'sawtooth',d:.12,g:.04,bus:MUS});if(i%4===0)tone(55,{t,d:.25,g:.2,f2:40,bus:MUS});if(i%8===4)noise({t,d:.12,g:.05,hp:1500,wet:.3,bus:MUS});
+    if(i%16===0)[0,7,12,16].forEach(k=>tone(MID(root+24+k),{t,d:2.2,g:.018,a:.4,wet:.6,type:'sawtooth',detune:6,bus:MUS}));}},
+};
+let mus=null;
+function musicStart(){musicStop();if(!AC||AUD.music==='off'||!LOOPS[AUD.music])return;const L0=LOOPS[AUD.music],sp=60/L0.bpm/4;let i=mus?.i||0,next=AC.currentTime+.08;
+  mus={i,id:setInterval(()=>{if(!AC)return;while(next<AC.currentTime+.3){L0.step(mus.i,next-AC.currentTime);mus.i++;next+=sp;}},60)};}
+// pause: the music goes quiet and muffled, as if through a wall; «Продолжить» brings it back
+function musicMuffle(on){if(!AC||!MF)return;const t=AC.currentTime;MF.frequency.cancelScheduledValues(t);MUS.gain.cancelScheduledValues(t);
+  MF.frequency.setTargetAtTime(on?520:18000,t,on?.18:.12);MUS.gain.setTargetAtTime(on?.26:.45,t,on?.2:.12);}
+function musicStop(){if(mus){clearInterval(mus.id);mus={i:mus.i,id:null};}}
+function renderAudioSet(){const box=$('audioSet');if(!box)return;
+  const b=(id,label,on,fn)=>`<button id="${id}" class="${on?'on':''}">${label}</button>`;
+  box.innerHTML=b('aSfx','Звуки',AUD.sfx)+b('aLofi','♪ Лоу-фай',AUD.music==='lofi')+b('aSynth','♪ Синтвейв',AUD.music==='synth')+b('aOff','Без музыки',AUD.music==='off')+(HAPT?b('aHap','Вибрация',AUD.haptics):'');
+  const set=(k,v)=>{AUD[k]=v;audioSave();ev('audio',k,v);renderAudioSet();audioInit();if(k==='music'){if(v==='off')musicStop();else musicStart();} /* the chosen track keeps playing in pause and carries on after «Продолжить» (v40: the old 2.6 s preview timer cut it off) */if(k==='sfx'&&v)sfx('coin');if(k==='haptics'&&v)haptic('success');};
+  $('aSfx').onclick=()=>set('sfx',!AUD.sfx);$('aLofi').onclick=()=>set('music','lofi');$('aSynth').onclick=()=>set('music','synth');$('aOff').onclick=()=>set('music','off');
+  if(HAPT)$('aHap').onclick=()=>set('haptics',!AUD.haptics);}
+document.addEventListener('visibilitychange',()=>{try{if(document.hidden)AC?.suspend();else if(S?.state==='play'||S?.state==='pause')AC?.resume();}catch(e){}});
+
+// ---------- «Замедлить»: a refilling reserve (v46) ----------
+// Author's design (2026-10-25), after v45 turned the paid button into a trap (credits burnt in panic instead of robots):
+// slow time is a reserve that refills by itself. Tap to start ×0.5, tap again to stop and keep the rest; any amount
+// left can be used. While off it refills SLOW_REFILL s per second of play. Credits buy capacity, not time: +SLOW_UP_S
+// for SLOW_UP_COST, up to SLOW_UP_MAX times — an investment like a robot, not a panic spend.
+const SLOW_CAP0=3, SLOW_REFILL=1/5, SLOW_UP_S=2, SLOW_UP_COST=15, SLOW_UP_MAX=3;
+const slowBtn=$('slowBtn'),slowUp=$('slowUp');
+function slowTick(rdt){if(S.slowOn){S.slowRes=Math.max(0,S.slowRes-rdt);S.slowUsed=(S.slowUsed||0)+rdt;if(S.slowRes<=0){S.slowOn=false;ev('slow-off',0,'empty');sfx('slowOut');}}
+  else S.slowRes=Math.min(S.slowCap,S.slowRes+rdt*SLOW_REFILL);}
+slowBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(S?.state!=='play')return;
+  if(S.slowOn){S.slowOn=false;ev('slow-off',r1(S.slowRes),'tap');sfx('slowOut');haptic('soft');}
+  else if(S.slowRes>=.2){S.slowOn=true;S.slowStarts=(S.slowStarts||0)+1;ev('slow-on',r1(S.slowRes),!!S.over);sfx('slowIn');haptic('soft');}
+  else{sfx('bad');haptic('tick');ev('slow-empty');}
+  renderSlowBtn();});
+slowUp.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(S?.state!=='play'||S.slowUps>=SLOW_UP_MAX)return;
+  if(S.credits<SLOW_UP_COST){sfx('bad');haptic('tick');ev('slow-up-poor',S.credits);return;}
+  S.credits-=SLOW_UP_COST;S.spent+=SLOW_UP_COST;S.slowUps++;S.slowCap+=SLOW_UP_S;S.slowRes+=SLOW_UP_S;ev('slow-up',S.slowUps,S.credits);sfx('buy');haptic('success');renderSlowBtn();});
+for(const b of [slowBtn,slowUp]){b.addEventListener('click',e=>e.preventDefault());}
+function renderSlowBtn(){if(!S)return;const on=!!S.slowOn,empty=!on&&S.slowRes<.2,hot=!on&&!empty&&!!S.over&&S.state==='play';
+  slowBtn.classList.toggle('act',on);slowBtn.classList.toggle('empty',empty);slowBtn.classList.toggle('hot',hot);slowBtn.classList.toggle('calm',!on&&!empty&&!hot);
+  const n=S.slowRes.toFixed(1).replace('.',','),t=on?`Стоп<small>×0,5 · ${n} с</small>`:empty?`Копится<small>${n} / ${S.slowCap} с</small>`:`Замедлить<small>${n} / ${S.slowCap} с</small>`;
+  const el=$('slowTxt');if(el.innerHTML!==t)el.innerHTML=t;$('slowFill').style.width=Math.max(0,Math.min(1,S.slowRes/S.slowCap))*100+'%';
+  slowUp.hidden=S.slowUps>=SLOW_UP_MAX;slowUp.classList.toggle('poor',S.credits<SLOW_UP_COST);
+  document.body.classList.toggle('slowmo',on&&S.state==='play');}
+
+// ---------- Two hands: the ⟳ button (v29) ----------
+// One hand carries the file, the thumb of the hand holding the phone presses ⟳: the file in hand turns 90° clockwise around
+// its centre at the moment of the press (pointerdown — a second finger, so the carry is not interrupted). With nothing in
+// hand the button does nothing (a tap on a queued file still turns it). The side of the button follows the chosen hand.
+let HAND='right';try{HAND=localStorage.getItem('defrag-hand')==='left'?'left':'right';}catch(e){}
+function applyHand(){document.documentElement.classList.toggle('lefty',HAND==='left');}
+applyHand();
+function setHand(h){HAND=h;try{localStorage.setItem('defrag-hand',h);}catch(e){}applyHand();ev('hand',h);}
+const rotBtn=$('rotBtn');
+rotBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(S?.state!=='play')return;
+  rotBtn.classList.add('hit');setTimeout(()=>rotBtn.classList.remove('hit'),90);
+  if(drag?.moved){rotateDrag('кнопка');ev('rot-btn',drag.id,1);}else ev('rot-btn',null,0);});
+rotBtn.addEventListener('click',e=>e.preventDefault());
+// While a file is in hand, a second finger anywhere on the bottom bar turns it (robots and buying wait until the file is down).
+const actionsEl=document.querySelector('.actions');let swallowClick=0;
+actionsEl.addEventListener('pointerdown',e=>{if(!drag?.moved||e.pointerId===drag.pointerId||e.target===rotBtn||rotBtn.contains(e.target))return;
+  e.preventDefault();e.stopPropagation();swallowClick=performance.now();rotBtn.classList.add('hit');setTimeout(()=>rotBtn.classList.remove('hit'),90);
+  rotateDrag('нижняя полоса');ev('rot-btn',drag.id,2);},true);
+actionsEl.addEventListener('click',e=>{if(performance.now()-swallowClick<800){e.stopPropagation();e.preventDefault();swallowClick=0;}},true);
+rotBtn.addEventListener('contextmenu',e=>e.preventDefault());
+// ---------- Double tap to turn (touch, retired in v23) ----------
+// Lifting the finger does not drop the file at once: for LIFT_WAIT the file stays where it is. Two quick taps on it
+// turn it 90° around its centre (and it waits again); touching it and moving carries it on; otherwise it is placed.
+const LIFT_WAIT=250, DTAP_GAP=350, TAP_NEAR=1.5;
+function startLift(){const d=drag;clearTimeout(d.liftTimer);d.lift={taps:d.lift?.taps||[],down:null};d.pointerId=null;d.liftTimer=setTimeout(finishLift,d.lift.taps.length?DTAP_GAP:LIFT_WAIT);}
+function finishLift(){if(!drag?.lift||drag.lift.down)return;const d=drag;d.lift=null;finishDrag(null);}
+function nearFloat(x,y){const r=drag.float.getBoundingClientRect(),b=shapeBox(drag.file.shape,cell),m=TAP_NEAR*cell; // the float box itself has no size: use the shape's box
+  return x>=r.left-m&&x<=r.left+b.w+m&&y>=r.top-m&&y<=r.top+b.h+m;}
+addEventListener('pointerdown',e=>{const d=drag;if(!d?.lift)return;
+  if(!nearFloat(e.clientX,e.clientY)){clearTimeout(d.liftTimer);d.lift=null;finishDrag(null);return;} // a press elsewhere: place it and go on
+  e.preventDefault();e.stopPropagation();clearTimeout(d.liftTimer);
+  d.lift.down={x:e.clientX,y:e.clientY,t:performance.now()};d.pointerId=e.pointerId;
+  const fl=d.float.getBoundingClientRect(),h=holdPt(e);d.off={x:fl.left-h.x,y:fl.top-h.y};d.last={clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType};},true);
+function liftUp(e){const d=drag,L0=d.lift,dn=L0.down;L0.down=null;
+  if(L0.carry){L0.carry=false;L0.taps=[];moveDrag(e);startLift();return;} // carried on and lifted again
+  const now=performance.now();L0.taps=L0.taps.filter(t=>now-t<DTAP_GAP);L0.taps.push(now);
+  if(L0.taps.length>=2){L0.taps=[];rotateDrag('двойной тап');ev('dtap-turn',d.id);}
+  startLift();}
+function discard(from,id){
+  if(from==='queue'){const i=qIndex(id);if(i>=0)S.queue.splice(i,1);}else{const p=S.pieces.get(id);if(p){setCells(p,0);S.pieces.delete(id);}}
+  S.credits=Math.max(0,S.credits-TRASH_COST);S.trashed++;const l=F(id);if(l)l.out='trash';ev('trash',id,from);}
+function endDrag(e){if(!drag||(e&&e.pointerId!==drag.pointerId))return;
+  if(drag.lift){liftUp(e);return;}
+  if(e)moveDrag(e);if(!drag)return;
+  // touch: a lifted finger may come back for a double tap — wait a moment before placing
+  finishDrag(e);}
+function finishDrag(e){if(!drag)return;
+  const d=drag;drag=null;clearTimeout(d.liftTimer);cleanup(d);
+  const p=d.from==='board'?S.pieces.get(d.id):null;
+  const dist=e?Math.round(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)):Math.round(Math.hypot(d.last.clientX-d.x0,d.last.clientY-d.y0)),ms=Math.round(performance.now()-d.t0);
+  const tap=!d.moved||(d.from==='queue'&&e&&d.slotEl&&inside(d.slotEl,e.clientX,e.clientY)&&ms<600);
+  let outcome;
+  if(tap){outcome='rotate';
+    if(d.from==='queue'){const i=qIndex(d.id);if(i>=0){S.queue[i].shape=rotate(d.moved?d.shape0:S.queue[i].shape);const l=F(d.id);if(l)l.r++;}}
+    else if(p&&!p.proc){const r=rotate(p.shape);setCells(p,0);const at=snap(r,p.ox,p.oy);if(at){p.shape=r;p.ox=at.ox;p.oy=at.oy;S.moves++;const l=F(p.id);if(l)l.r++;}else outcome='rotate-blocked';setCells(p,p.id);}
+  }else if(d.overTrash){discard(d.from,d.id);outcome='trash';}
+  else if(d.from==='queue'){const i=qIndex(d.id);
+    if(i>=0&&d.target?.spot){S.queue[i].shape=d.file.shape;S.queue.splice(i,1);place(d.file,d.target.spot.ox,d.target.spot.oy);outcome='placed';}
+    else{if(i>=0)S.queue[i].shape=d.file.shape;outcome=d.target?'no-room':'dropped-outside';if(d.target){flashBad(d.file,d.target.ox,d.target.oy);const l=F(d.id);if(l)l.f++;}}}
+  else if(p){setCells(p,0);
+    if(d.target?.spot&&fits(p.shape,d.target.spot.ox,d.target.spot.oy)){if(d.target.spot.ox!==p.ox||d.target.spot.oy!==p.oy||p.shape!==d.shape0){p.ox=d.target.spot.ox;p.oy=d.target.spot.oy;S.moves++;const l=F(p.id);if(l)l.m++;}outcome='moved';}
+    else{p.shape=d.shape0;outcome=d.target?'no-room':'dropped-outside';if(d.target)flashBad(p,d.target.ox,d.target.oy);}
+    setCells(p,p.id);}
+  ev('drop',d.from,d.id,outcome,dist,ms,d.last.pointerType);
+  diag(`нажатие: ${lastDown} · сдвиг ${dist} px · ${ms} мс → ${outcome}`);lastDown='';
+  render();}
+
+slots.forEach((sl,i)=>{
+  sl.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;if(S?.state!=='play')return;const f=S.queue[i];if(!f)return;e.preventDefault();
+    const [gx,gy]=anchor(f.shape);beginDrag(e,'queue',{...f},gx,gy,sl);});
+  sl.addEventListener('pointerenter',()=>{hoverSlot=i;sl.classList.add('hover');});
+  sl.addEventListener('pointerleave',()=>sl.classList.remove('hover'));
+  sl.addEventListener('contextmenu',e=>{e.preventDefault();e.rotDone=true;if(drag)return rotateDrag('правый клик');const f=S?.state==='play'&&S.queue[i];if(f){rotateQueued(f.id,'правый клик');ev('rotate-key',f.id,'right');}});
+});
+board.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;if(S?.state!=='play')return;e.preventDefault();
+  const c=e.target.closest('.piece:not(.ghost):not(.float) .cell');const p=c&&S.pieces.get(+c.parentElement.dataset.id);
+  if(p&&!p.proc){const [x,y]=p.shape[+c.dataset.i];beginDrag(e,'board',p,x,y,null);}});
+board.addEventListener('contextmenu',e=>{e.preventDefault();e.rotDone=true;if(drag)return rotateDrag('правый клик');
+  const c=e.target.closest('.piece:not(.ghost):not(.float) .cell'),p=c&&S?.pieces.get(+c.parentElement.dataset.id);if(!p||p.proc||S.state!=='play')return;
+  const r=rotate(p.shape);setCells(p,0);const at=snap(r,p.ox,p.oy);if(at){p.shape=r;p.ox=at.ox;p.oy=at.oy;S.moves++;}setCells(p,p.id);diag('поворот: правый клик');render();});
+addEventListener('contextmenu',e=>{if(drag&&!e.rotDone){e.preventDefault();rotateDrag('правый клик');}});
+addEventListener('pointermove',moveDrag);
+addEventListener('pointerup',endDrag);
+addEventListener('pointercancel',e=>{if(drag&&!drag.lift&&e.pointerId===drag.pointerId)cancelDrag();});
+// diagnostics: remember what a press on the intake or the board hit; report presses nothing handled
+const descr=el=>el?(el.id?'#'+el.id:(typeof el.className==='string'&&el.className?'.'+el.className.split(' ')[0]:el.tagName.toLowerCase())):'?';
+addEventListener('pointerdown',e=>{lastDown=tray.contains(e.target)||board.contains(e.target)?`${e.pointerType} ${e.button} на ${descr(e.target)}`:'';},true);
+addEventListener('pointerup',e=>{if(!drag&&lastDown&&e.button!==2){diag(`нажатие: ${lastDown} → не обработано`);if(S?.state==='play')ev('press-unhandled',lastDown);lastDown='';}},true);
+addEventListener('keydown',e=>{if(e.repeat||e.target.tagName==='TEXTAREA')return;
+  if(e.code==='KeyP'||e.key==='Escape'){e.preventDefault();S?.state==='pause'?resume():pause();return;}
+  if(S?.state!=='play')return;
+  if(e.code==='KeyR'||e.code==='Space'){e.preventDefault();const why=e.code==='Space'?'пробел':'R';
+    if(drag){rotateDrag(why);ev('rotate-key',drag?.id,why);}else{const f=S.queue[hoverSlot]||S.queue[0];if(f){rotateQueued(f.id,why);ev('rotate-key',f.id,why);}}}});
+// Safari / in-app panels: keep the finger on the file mid-drag (no page scroll, no long-press menu)
+for(const el of [tray,board])el.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+tray.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelDrag();pause();}});
+$('pauseBtn').onclick=pause;
+$('startBtn').onclick=start;
+if(NATIVE){$('exportBtn').hidden=false;$('exportBtn').onclick=exportLogs;}
+addEventListener('resize',()=>S&&layout());
+reset();S.state='idle';layout(); // nothing runs until «Начать смену»
+})();
+</script>
+
+<script>
+(()=>{const tg=window.Telegram?.WebApp;if(!tg||tg.platform==='unknown')return;
+  try{tg.ready();tg.expand();}catch(e){}
+  try{tg.disableVerticalSwipes?.();}catch(e){}          // swipe-down must not close the game while dragging files
+  try{tg.setHeaderColor?.('#4357f0');tg.setBackgroundColor?.('#262a9e');tg.setBottomBarColor?.('#262a9e');}catch(e){}
+  try{tg.enableClosingConfirmation?.();}catch(e){}       // ask before closing mid-shift
+  document.documentElement.classList.add('tg');})();
+</script>
+<style>html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+html.tg #app{padding-top:max(8px,var(--tg-content-safe-area-inset-top,0px));padding-bottom:max(8px,env(safe-area-inset-bottom),var(--tg-safe-area-inset-bottom,0px));gap:8px}</style>
+</body></html>
