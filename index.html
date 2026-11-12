@@ -263,6 +263,14 @@ button.primary{background:var(--gold)}
 #fan .fanopt{position:absolute;width:54px;height:54px;min-height:0;padding:0;margin:-27px 0 0 -27px;border-radius:50%;font-size:11px;font-weight:900;pointer-events:auto;transition:transform .08s;animation:fanin .12s ease-out}
 #fan .fanopt.cur{box-shadow:0 0 0 3px var(--gold),0 3px 0 var(--ink)}
 #fan .fanopt.hot{transform:scale(1.22)}
+#fan .fanopt.want{animation:fanin .12s ease-out,wink .6s .12s ease-in-out infinite alternate;z-index:1}
+#fan .fanopt.dim{opacity:.45}
+@keyframes wink{from{transform:scale(1);box-shadow:0 0 0 3px #fff,0 3px 0 var(--ink)}to{transform:scale(1.2);box-shadow:0 0 0 5px #fff,0 0 18px 6px rgba(255,255,255,.75),0 3px 0 var(--ink)}}
+#board.fanfocus .piece:not(.mine):not(.ghost){filter:brightness(.5) saturate(.6)}
+#board .piece.mine{z-index:75}
+.piece.mine .cell{box-shadow:0 0 0 3px #fff,0 0 16px 5px rgba(255,255,255,.65)!important;animation:minep .7s ease-in-out infinite alternate}
+@keyframes minep{from{filter:brightness(1)}to{filter:brightness(1.35)}}
+.learned{font-weight:800;color:var(--ink)}
 #fan .fanhub{position:absolute;transform:translate(-50%,-100%);font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 0 var(--ink);white-space:nowrap}
 @keyframes fanin{from{transform:scale(.4);opacity:0}}
 @media (prefers-reduced-motion:reduce){#alarm{animation:none}#outl.flash{animation:none;opacity:.45}.piece.busy .cell,.pop,.rcard.buy.ready,.rcard.buy.nag{animation:none}}
@@ -337,7 +345,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v70', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v71', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -358,7 +366,13 @@ let S, L=null, cell=36, raf=0, last=0, nextId=1;
 
 function rotate(shape){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return r.map(([x,y])=>[x-mx,y-my]);}
 function rotatePoint(shape,[px,py]){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return [maxY-py-mx,px-my];}
-function pickType(){const c=S?DCFG():null;if(c?.repeat&&S.lastType&&Math.random()<c.repeat)return S.lastType;
+function pickType(){const c=S?DCFG():null;
+  // v71 (author): day 3 until both lessons are done — different types take turns (no type twice in a row) and every 3rd file is
+  // the twin of a lone file waiting in memory, so «move it to its twin» comes for sure and never for a file that already has company
+  if(S&&S.day===3&&c.tut&&!(SEEN.move&&SEEN.clusterwin)){S.d3n=(S.d3n||0)+1;
+    if(S.d3n%3===0){const lone=[...S.pieces.values()].filter(p=>!p.proc&&!p.vir&&!neighbours(p).some(n=>n.type===p.type));if(lone.length){const t=lone[0].type;S.lastType=t;return t;}}
+    const ks=Object.keys(c.types).filter(k=>k!==S.lastType);const t=ks[Math.floor(Math.random()*ks.length)];S.lastType=t;return t;}
+  if(c?.repeat&&S.lastType&&Math.random()<c.repeat)return S.lastType;
   const w=c?.types||Object.fromEntries(Object.entries(TYPES).map(([k,t])=>[k,t.w]));const tot=Object.values(w).reduce((a,b)=>a+b,0);
   let n=Math.random()*tot;for(const [k,v] of Object.entries(w)){n-=v;if(n<0){if(S)S.lastType=k;return k;}}return 'TMP';}
 // v67: does a quarter turn visibly change the file? (a single cell or a 2×2 square does not)
@@ -477,10 +491,11 @@ function render(){
   if(!S)return;
   updateOutlines();
   board.querySelectorAll('.piece:not(.ghost)').forEach(e=>{if(!S.pieces.has(+e.dataset.id)||(drag?.moved&&drag.id===+e.dataset.id))e.remove();});
-  const CLU=clustersNow();
+  const CLU=clustersNow(),fb=fanState?.b?.id; /* v71 (author): while a bot's fan is open, its files in memory are lit and the rest dims */
+  board.classList.toggle('fanfocus',!!fanState);
   for(const p of S.pieces.values()){
     if(drag?.moved&&drag.from==='board'&&drag.id===p.id)continue;
-    let el=board.querySelector(`.piece[data-id="${p.id}"]`);
+    let el=board.querySelector(`.piece[data-id="${p.id}"]`);if(el)el.classList.toggle('mine',!!(fb&&p.proc&&p.proc.bots.includes(fb)));
     if(!el||el.dataset.key!==`${p.ox},${p.oy},${p.shape.join(';')}`){el?.remove();el=drawShape(board,p,cell);el.dataset.id=p.id;el.dataset.key=`${p.ox},${p.oy},${p.shape.join(';')}`;Object.assign(el.style,{left:p.ox*cell+'px',top:p.oy*cell+'px'});}
     el.classList.toggle('busy',!!p.proc);el.classList.toggle('virus',!!p.awake);el.classList.toggle('infected',!!p.infected);
     {const ci=CLU.get(p.id),inC=!!(ci||p.proc?.members?.length>1);el.classList.toggle('clu',inC);let tg=el.querySelector('.clutag');const showT=ci?.isLead||(p.proc?.members?.length>1&&p.proc.lead===p.id);
@@ -528,11 +543,11 @@ function openFan(e,b,card){if(S?.state!=='play'||(e.pointerType==='mouse'&&e.but
   fan.replaceChildren();const opts=[];
   const PR=DCFG().vir?PREFS:PREFS.filter(x=>x!=='AV');
   PR.forEach((pf,i)=>{const a=Math.PI*(1-(i+0.5)/PR.length),x=cx+Math.cos(a)*R,y=cy-Math.sin(a)*R;
-    const o=document.createElement('button');o.className='fanopt'+(b.pref===pf?' cur':'');o.textContent=pf||'Любые';o.style.left=x+'px';o.style.top=y+'px';
+    const want=S.coach?.want,o=document.createElement('button');o.className='fanopt'+(b.pref===pf?' cur':'')+(want?(pf===want?' want':' dim'):'');o.textContent=pf||'Любые';o.style.left=x+'px';o.style.top=y+'px';
     o.style.background=pf?prefColor(pf):'var(--cream)';if(pf==='AV')o.style.color='#14123a';o.setAttribute('aria-label',pf?'Специалист '+pf:'Любые файлы');
     o.addEventListener('click',()=>{if(fanState?.sticky)pickFan(pf,'tap');});fan.append(o);opts.push({pf,x,y,el:o});});
   const hub=document.createElement('div');hub.className='fanhub';hub.style.left=cx+'px';hub.style.top=cy+'px';hub.textContent='Бот '+b.id;fan.append(hub);
-  fan.hidden=false;fanState={b,opts,pid:e.pointerId,t0:performance.now(),x0:e.sx,y0:e.sy,moved:false,hover:null,sticky:false};}
+  fan.hidden=false;fanState={b,opts,pid:e.pointerId,t0:performance.now(),x0:e.sx,y0:e.sy,moved:false,hover:null,sticky:false};render();}
 function fanHit(x,y){let best=null,bd=40;for(const o of fanState.opts){const d=Math.hypot(x-o.x,y-o.y);if(d<bd){bd=d;best=o;}}return best;}
 // v47 (author, 2026-10-25): specialisation may only speed up the job in hand, never slow it. A robot that took a DOC
 // as «Любые» and is then switched to DOC finishes the rest 20% faster; switching away keeps the job as it was.
@@ -541,7 +556,7 @@ function specBoost(b){if(!b.pref||b.pref==='AV')return;for(const p of S.pieces.v
   const r=SPEC_OWN/pr.k;pr.t*=r;pr.dur*=r;pr.k=SPEC_OWN;pr.boostAt=performance.now();
   for(const id of pr.members){const l=F(id);if(l)l.k=SPEC_OWN;}ev('spec-boost',p.id,b.id,b.pref,r1(pr.dur-pr.t));sfx('boost');haptic('light');}}
 function pickFan(pf,how){const b=fanState.b;if(S.state==='play'&&b.pref!==pf){b.pref=pf;ev('pref',b.id,pf,how);specBoost(b);}closeFan();renderRobots(true);}
-function closeFan(){fan.hidden=true;fan.replaceChildren();fanState=null;}
+function closeFan(){const was=!!fanState;fan.hidden=true;fan.replaceChildren();fanState=null;if(was&&S)render();}
 addEventListener('pointermove',e=>{if(!fanState||fanState.sticky||e.pointerId!==fanState.pid)return;
   if(Math.hypot(e.sx-fanState.x0,e.sy-fanState.y0)>8)fanState.moved=true;
   const h=fanHit(e.sx,e.sy);if(h!==fanState.hover){fanState.hover?.el.classList.remove('hot');h?.el.classList.add('hot');fanState.hover=h;}});
@@ -601,7 +616,7 @@ function tickInner(now){
       for(const id of pr.bots){const b=S.bots.find(b=>b.id===id);if(b&&b.busy===pr.lead)b.busy=null;}
       if(ms.length>1){popAt(ms[0],'+'+sum);ev('cluster-done',pr.lead,ms.length,pr.bots.length,r1(pr.dur));fxCluster(ms,pr.bots.length,pr.bots);}
       else{const q=ms[0];if(!q)continue;popAt(q,'+'+sum);if(q.vir){S.vs.killed++;ev('virus-killed',q.id,pr.bot);fxVirusDone(q);if(![...S.pieces.values()].some(x=>x.vir&&x.awake)){ev('virus-purged');fxSpecial('VIRUS PURGED','purged',q);}}else fxDone(q);}
-      if(S.pieces.size===0&&S.time>15&&S.time-(S.lastClean??-99)>20){S.lastClean=S.time;S.cleans=(S.cleans||0)+1;ev('system-clean');fxSpecial('SYSTEM CLEAN','clean');}}}
+      if(!DCFG().tut&&S.pieces.size===0&&S.time>15&&S.time-(S.lastClean??-99)>20){ /* v71 (author): kept as a surprise for the real shifts */S.lastClean=S.time;S.cleans=(S.cleans||0)+1;ev('system-clean');fxSpecial('SYSTEM CLEAN','clean');}}}
     virusTick(dt);avTick(dt);
     if(L&&S.time>=S.nextSample){S.nextSample+=5;L.samples.push([r1(S.time),S.queue.length,fill(),S.credits,S.bots.length,[...S.pieces.values()].filter(p=>p.proc).length,S.bots.map(b=>b.pref||'*').join('')]);}
     // overflow grace: over 24 cells starts a 10 s countdown; getting back to 24 or less cancels it
@@ -611,7 +626,7 @@ function tickInner(now){
     else{if(S.over){ev('overflow-fixed',r1(S.overStart-S.reserve),r1(S.reserve));S.over=0;}S.reserve=Math.min(GRACE,S.reserve+dt*REFILL);}
     setAlarm(S.over?'over':S.reserve<GRACE-0.05?'refill':'',S.reserve);
     maybeFlash();fxBits(dt);sfxTick(dt);tutTick();
-    if(S.time>=S.len)return end(true);
+    if(S.time>=S.len){if(S.day===3&&DCFG().tut&&!(SEEN.move&&SEEN.clusterwin)&&S.len<SHIFT+60){S.len+=10;ev('day3-extend',S.len);}else return end(true);} /* v71: day 3 waits for both cluster lessons */
     render();
   }
   raf=requestAnimationFrame(tick);
@@ -621,9 +636,9 @@ function end(win){if(S?.coach)endCoach('end');clearHint();setAlarm('');cancelDra
   L.result={day:dayWas,stars,score:sc,slow:{ups:S.slowUps,starts:S.slowStarts||0,used:r1(S.slowUsed||0)},vir:{...S.vs},win,overflows:S.overflows,flashes:S.flashes,reserveEnd:r1(S.reserve),slowT:r1(S.slowT),slowDrags:S.slowDrags,t:r1(S.time),credits:S.credits,spent:S.spent,done:S.done,moves:S.moves,trashed:S.trashed,robots:S.bots.length,prefs:S.bots.map(b=>b.pref),fill:fill(),queue:S.queue.length,endedAt:new Date().toISOString()};
   saveState='';saveRun();
   const nextTxt=tut?(win?(dayWas<4?'День '+(dayWas+1):'Полная смена'):'Повторить день'):'Ещё раз';
-  $('dialog').innerHTML=(tut?`<h2>${win?'День '+dayWas+' пройден':'Попробуем ещё раз'}</h2>`:`<h2>${win?'Смена закрыта':'Вход переполнен'}</h2>`)+(win?`<div class="starsrow"><div class="stars" aria-label="${stars} из 3 звёзд">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><button type="button" class="why" id="whyBtn" aria-expanded="false" aria-controls="scoreBox" title="За что звёзды">▸</button></div>`+scoreHtml(sc):'')+
+  $('dialog').innerHTML=(tut?`<h2>${win?'День '+dayWas+' пройден':'Попробуем ещё раз'}</h2>`:`<h2>${win?'Смена закрыта':'Вход переполнен'}</h2>`)+(win&&!tut?`<div class="starsrow"><div class="stars" aria-label="${stars} из 3 звёзд">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><button type="button" class="why" id="whyBtn" aria-expanded="false" aria-controls="scoreBox" title="За что звёзды">▸</button></div>`+scoreHtml(sc):'')+
   `<p>${win?(tut?'Разобрано файлов: '+S.done+' · '+S.credits+' кр.':'Вы продержались 2 минуты.'):'Вход был переполнен больше 10 секунд. '+(tut?'Кладите файлы плотнее и жмите ⏳, когда не успеваете.':'')}</p>`+
-  (win&&tut?`<div class="unlock"><span>ОТКРЫТО</span>${DAYS[dayWas].unlock}</div>`:'')+(tut?'':`<div class="stat">${S.credits} кр.</div><p>Обработано файлов: ${S.done} · перемещений: ${S.moves} · время: ${Math.floor(S.time)} с</p>`)+`
+  (win&&tut&&DAYS[dayWas].learned?`<p class="learned">${DAYS[dayWas].learned}</p>`:'')+(win&&tut?`<div class="unlock"><span>ОТКРЫТО</span>${DAYS[dayWas].unlock}</div>`:'')+(tut?'':`<div class="stat">${S.credits} кр.</div><p>Обработано файлов: ${S.done} · перемещений: ${S.moves} · время: ${Math.floor(S.time)} с</p>`)+`
   <label for="note"><b>Что мешало или понравилось?</b> (необязательно)</label><textarea id="note" placeholder="Пара слов для разработчика"></textarea>
   <p id="saveNote">${saveText()}</p>
   <div class="row"><button id="copyBtn">${NATIVE?'Отправить журналы':'Скопировать отчёт'}</button><button class="primary" id="startBtn">${nextTxt}</button></div>`;
@@ -1034,10 +1049,10 @@ function renderSlowBtn(){if(!S)return;const on=!!S.slowOn,empty=!on&&S.slowRes<.
 // with one new thing; hints are one line, near the place, shown once. Day 1 is 90 s and waits for the first transfer
 // (a ghost finger shows it). Stars from the first day: ★ survived, ★★ ≤1 overflow, ★★★ no overflow. Skip → full game.
 const DAYS={
-  1:{tut:1,len:60,flow:[3.4,2.6],types:{TMP:60,DOC:40},buy:0,spec:1,clusters:0,vir:0,slowUp:0,title:'Первая смена',lines:['Клади файлы в память','Боты их разберут'],unlock:'Покупка ботов'},
-  2:{tut:1,len:SHIFT,burst:62,flow:[3.2,2.6],types:{TMP:35,DOC:35,PNG:20,RAW:10},buy:1,spec:1,clusters:0,vir:0,slowUp:0,title:'Команда ботов',lines:['Покупай ботов за кредиты','Каждому боту — свой тип файлов'],unlock:'Кластеры'},
-  3:{tut:1,len:SHIFT,flow:[3.1,2.5],types:{TMP:20,DOC:35,PNG:35,RAW:10},repeat:.45,buy:1,spec:1,clusters:1,vir:0,slowUp:0,title:'Кластеры',lines:['Одинаковые файлы рядом','уходят вместе и быстрее'],unlock:'Вирусы'},
-  4:{tut:1,len:SHIFT,flow:[3.0,2.4],types:{TMP:25,DOC:35,PNG:30,RAW:10},buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет бот-антивирус'],unlock:'Полная игра'},
+  1:{tut:1,len:60,flow:[3.4,2.6],types:{TMP:60,DOC:40},buy:0,spec:1,clusters:0,vir:0,slowUp:0,title:'Первая смена',lines:['Клади файлы в память','Боты их разберут'],unlock:'Покупка ботов',learned:'Ты научился класть и поворачивать файлы и выбирать тип бота'},
+  2:{tut:1,len:SHIFT,burst:62,flow:[3.2,2.6],types:{TMP:35,DOC:35,PNG:20,RAW:10},buy:1,spec:1,clusters:0,vir:0,slowUp:0,title:'Команда ботов',lines:['Покупай ботов за кредиты','Каждому боту — свой тип файлов'],unlock:'Кластеры',learned:'Ты научился покупать ботов и замедлять время'},
+  3:{tut:1,len:SHIFT,flow:[3.1,2.5],types:{TMP:20,DOC:35,PNG:35,RAW:10},repeat:.45,buy:1,spec:1,clusters:1,vir:0,slowUp:0,title:'Кластеры',lines:['Одинаковые файлы рядом','уходят вместе и быстрее'],unlock:'Вирусы',learned:'Ты научился двигать файлы и собирать кластеры'},
+  4:{tut:1,len:SHIFT,flow:[3.0,2.4],types:{TMP:25,DOC:35,PNG:30,RAW:10},buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет бот-антивирус'],unlock:'Полная игра',learned:'Ты научился ловить вирусы антивирусом'},
   0:{tut:0,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'full',slowUp:1}};
 const DCFG=()=>DAYS[S?.day??0]||DAYS[0];
 // TUT_DEV (author, 2026-11-11): while the tutorial is being tuned, every load starts at day 1 and shows every step again;
@@ -1123,9 +1138,12 @@ const pieceRect=id=>{const p=S?.pieces.get(id);if(!p)return null;const o=boardXY
 const emptySpot=()=>{const br=board.r();for(let y=ROWS-1;y>=0;y--)for(let x=0;x<COLS;x++)if(!S.grid[y][x]&&!(S.grid[y][x-1])&&!(S.grid[y][x+1])&&!(S.grid[y-1]?.[x])&&!(S.grid[y+1]?.[x]))return {x:br.left+(x+.5)*cell,y:br.top+(y+.5)*cell};return {x:br.left+br.width/2,y:br.top+br.height-cell};};
 // v69: a bot that has just started on a plain file and is not yet of its type
 function justTaken(){for(const b of S.bots){const p=b.busy&&S.pieces.get(b.busy),pr=p?.proc;if(pr&&pr.bot===b.id&&pr.t<.35&&!p.vir&&b.pref!==pr.type)return {bid:b.id,type:pr.type};}return null;}
+const unionRect=rs=>{rs=rs.filter(Boolean);if(!rs.length)return null;const l=Math.min(...rs.map(r=>r.left)),t=Math.min(...rs.map(r=>r.top)),R=Math.max(...rs.map(r=>r.right)),B=Math.max(...rs.map(r=>r.bottom));return {left:l,top:t,right:R,bottom:B,width:R-l,height:B-t};};
+// v71: the first idle cluster in memory (ids), or null
+function firstCluster(){const free=[...S.pieces.values()].filter(q=>!q.proc&&!q.vir);for(const q of free){const g=clusterOf(q,free);if(g.length>1)return g.map(x=>x.id);}return null;}
 // v63: a pair for the move lesson — two idle files of one type that do not touch, and a place where the first fits beside the second
 function movePair(){const idle=[...S.pieces.values()].filter(p=>!p.proc&&!p.vir&&!p.awake);const br=board.r();
-  for(const a of idle){if(clusterOf(a,idle).length>1)continue; /* v70 (author): a file already in a cluster is not asked to move */for(const b of idle){if(a===b||a.type!==b.type||clusterOf(b,idle).some(n=>n.id===a.id))continue;
+  for(const a of idle){if(neighbours(a).some(n=>n.type===a.type))continue; /* v71 (author): only a lone file — no neighbour of its type, in work or not */for(const b of idle){if(a===b||a.type!==b.type||clusterOf(b,idle).some(n=>n.id===a.id)||neighbours(b).some(n=>n.type===b.type&&n.proc))continue; /* v71: nor beside a twin that is touching one in work */
     const bc=new Set(b.shape.map(([x,y])=>(b.ox+x)+','+(b.oy+y)));let best=null;
     for(let oy=0;oy<ROWS;oy++)for(let ox=0;ox<COLS;ox++){if(!fits(a.shape,ox,oy,a.id))continue;
       const touch=a.shape.some(([x,y])=>[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>bc.has((ox+x+dx)+','+(oy+y+dy))));if(!touch)continue;
@@ -1148,16 +1166,19 @@ function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst||S.wait
     coach({key:'buy',text:'Хватает кредитов — купи второго бота',sub:'Два бота разбирают память вдвое быстрее',target:()=>$('buy'),valid:()=>!!$('buy'),gesture:'tap',until:a=>a[0]==='buy'});
   else if(S.day===1&&once('spec',()=>S.time>=35&&!!(T.job=justTaken()))){const {bid,type}=T.job; /* v69 (author): taught on day 1, the moment the bot takes a file */
     coach({key:'spec',text:touch?`Бот взял ${type}. Зажми бота и, не отпуская, веди палец к ${type}`:`Бот взял ${type}. Нажми на бота и выбери ${type}`,sub:'Бот своего типа берёт эти файлы первыми и делает их на 20% быстрее — этот файл тоже ускорится',
-      target:()=>robotsEl.querySelector(`[data-bot="${bid}"]`),gesture:'hold',place:'top',until:a=>a[0]==='pref'&&a[1]===bid&&a[2]===type});}
-  else if(c.clusters&&!T.cluster&&S.time>=(T.cnext||0)&&((T.cnext=S.time+.5),true)&&once('cluster',()=>!!(T.mv=movePair()))){const {a,b,ox,oy}=T.mv,pa=S.pieces.get(a);
-    /* v70 (author): show HOW — the place it goes is drawn on the board, the light covers the file and that place, a finger carries it there, the card stays off the board */
-    const dest=drawShape(board,pa,cell,'ghost dest');Object.assign(dest.style,{left:ox*cell+'px',top:oy*cell+'px'});
-    const destRect=()=>{const o=boardXY(),xs=pa.shape.map(c=>c[0]),ys=pa.shape.map(c=>c[1]);const l=o.x+(ox+Math.min(...xs))*cell,t=o.y+(oy+Math.min(...ys))*cell;return {left:l,top:t,width:(Math.max(...xs)-Math.min(...xs)+1)*cell,height:(Math.max(...ys)-Math.min(...ys)+1)*cell,right:l+(Math.max(...xs)-Math.min(...xs)+1)*cell,bottom:t+(Math.max(...ys)-Math.min(...ys)+1)*cell};};
-    const both=()=>{const r=pieceRect(a),d=destRect();if(!r)return null;const l=Math.min(r.left,d.left),t=Math.min(r.top,d.top),R=Math.max(r.right,d.right),B=Math.max(r.bottom,d.bottom);return {left:l,top:t,right:R,bottom:B,width:R-l,height:B-t};};
-    coach({key:'cluster',text:touch?'Зажми файл и перетащи его к такому же — на подсвеченное место':'Возьми файл мышкой и перетащи к такому же — на подсвеченное место',sub:'Одинаковые файлы вплотную — это кластер: уходят одним куском, быстрее и с ярким финалом. Пока несёшь файл из памяти, время идёт медленнее',
-      target:both,from:()=>pieceRect(a),valid:()=>S.pieces.has(a)&&S.pieces.has(b)&&!S.pieces.get(a)?.proc&&!S.pieces.get(b)?.proc,gesture:'drag',to:destRect,dragOnly:a,place:'off',cleanup:()=>dest.remove(),until:x=>x[0]==='drop'&&x[1]==='board'&&x[2]===a&&x[3]==='moved'});}
+      target:()=>robotsEl.querySelector(`[data-bot="${bid}"]`),gesture:'hold',place:'off',want:type,until:a=>a[0]==='pref'&&a[1]===bid&&a[2]===type});}
+  else if(c.clusters&&S.time>=(T.cnext||0)&&((T.cnext=S.time+.5),true)&&!SEEN.clusterwin&&!T.clw&&(T.clu=firstCluster())){T.clw=1; /* v71 (author): «Ты собрал свой первый кластер!» — whether he built it himself or after the move lesson */
+    const ids=T.clu;coach({key:'clusterwin',text:'Ты собрал свой первый кластер!',sub:'Одинаковые файлы вплотную бот забирает разом — быстрее и с ярким финалом. Такие файлы помечены «×N»',
+      target:()=>unionRect(ids.filter(id=>S.pieces.has(id)).map(pieceRect)),valid:()=>ids.some(id=>S.pieces.has(id)),place:'off',button:'Понятно'});}
+  else if(c.clusters&&!SEEN.move&&!T.move&&S.time>=(T.mnext||0)&&((T.mnext=S.time+.5),true)&&(T.mv=movePair())){T.move=1;const {a,b,ox,oy}=T.mv,pa=S.pieces.get(a),ty=pa.type;
+    /* v70: the place is drawn on the board, the light covers the file and that place, a finger carries it there, the card stays off the board.
+       v71: only a lone file (no neighbour of its type at all, working or not) is asked to move; the place is drawn only if the card is really shown */
+    const destRect=()=>{const o=boardXY(),xs=pa.shape.map(c=>c[0]),ys=pa.shape.map(c=>c[1]),w=(Math.max(...xs)-Math.min(...xs)+1)*cell,h=(Math.max(...ys)-Math.min(...ys)+1)*cell,l=o.x+(ox+Math.min(...xs))*cell,t=o.y+(oy+Math.min(...ys))*cell;return {left:l,top:t,width:w,height:h,right:l+w,bottom:t+h};};
+    const o={key:'move',text:`Файлы в памяти можно двигать! ${touch?'Зажми':'Возьми'} ${ty} и перетащи к другому ${ty}`,sub:'На подсвеченное место. Пока несёшь файл из памяти, время идёт медленнее',
+      target:()=>{const r=pieceRect(a);return r?unionRect([r,destRect()]):null;},from:()=>pieceRect(a),valid:()=>S.pieces.has(a)&&S.pieces.has(b)&&!S.pieces.get(a)?.proc&&!S.pieces.get(b)?.proc,gesture:'drag',to:destRect,dragOnly:a,place:'off',until:x=>x[0]==='drop'&&x[1]==='board'&&x[2]===a&&x[3]==='moved'};
+    if(coach(o)){const dest=drawShape(board,pa,cell,'ghost dest');Object.assign(dest.style,{left:ox*cell+'px',top:oy*cell+'px'});o.cleanup=()=>dest.remove();}}
   else if(c.vir&&once('threat',()=>!!threatNow())){const bot=S.bots.find(b=>b.pref!=='AV')||S.bots[0];
-    coach({key:'threat',text:'В потоке вирус! Сделай одного бота антивирусом',sub:'Зажми бота и выбери зелёный AV. Он ловит вирусы, но тратит 1 кр. каждые 2 с',target:()=>robotsEl.querySelector(`[data-bot="${bot.id}"]`),gesture:'hold',place:'top',until:a=>a[0]==='pref'&&a[2]==='AV'});}
+    coach({key:'threat',text:'В потоке вирус! Сделай одного бота антивирусом',sub:'Зажми бота и выбери зелёный AV. Он ловит вирусы, но тратит 1 кр. каждые 2 с',target:()=>robotsEl.querySelector(`[data-bot="${bot.id}"]`),gesture:'hold',place:'off',want:'AV',until:a=>a[0]==='pref'&&a[2]==='AV'});}
   else if(c.vir&&once('sus',()=>[...S.pieces.values()].some(p=>p.sus&&!p.awake))){const p=[...S.pieces.values()].find(p=>p.sus&&!p.awake);
     coach({key:'sus',text:'«?» — файл пришёл во время угрозы, он может быть вирусом',sub:'Антивирус проверит его и снимет «?»',place:'auto',target:()=>pieceRect(p.id),valid:()=>S.pieces.has(p.id),button:'Понятно'});}
   else if(c.vir&&once('awake',()=>[...S.pieces.values()].some(p=>p.awake))){const p=[...S.pieces.values()].find(p=>p.awake);
