@@ -30,8 +30,9 @@ body{margin:0;background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
 .chip.pause:disabled{opacity:.5;cursor:default}
 .title{flex:1;min-width:0}
 .title h1{margin:0;font-size:clamp(14px,4.2vw,18px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900;text-shadow:0 2px 0 var(--ink);text-wrap:balance}
-.title p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700}
+.title p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* v70: one line, so the memory never jumps */
 #app{position:relative}
+#app.stage{position:absolute;left:0;top:0;margin:0;max-width:none;transform-origin:0 0}
 #tray{flex-wrap:wrap;row-gap:8px;align-content:flex-start}
 #trayRow2{flex:0 0 100%;display:flex;gap:8px;align-items:stretch;height:50px}
 #slowWrap{flex:0 0 122px;position:relative;display:flex}
@@ -104,6 +105,8 @@ body.slowmo::after{content:"";position:fixed;inset:0;pointer-events:none;backgro
 @keyframes ringboost{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.9)}40%{transform:scale(1.35);box-shadow:0 0 0 6px rgba(255,255,255,.35)}100%{transform:scale(1);box-shadow:0 0 0 10px rgba(255,255,255,0)}}
 .ghost .cell{opacity:.55;border-style:dashed}
 .ghost.bad .cell{background:var(--danger)!important}
+.piece.ghost.dest{opacity:1;z-index:2;animation:destp 1s ease-in-out infinite alternate}.piece.ghost.dest .cell{opacity:1;background:transparent!important;border:3px dashed #fff!important;color:transparent}
+@keyframes destp{from{opacity:.45}to{opacity:1}}
 .piece.float{position:fixed;inset:auto;pointer-events:none;z-index:50;opacity:.9}
 .ghost .cell,.float .cell{pointer-events:none!important}
 .ghost.flash .cell{animation:flash .35s ease-out}
@@ -315,6 +318,15 @@ button.primary{background:var(--gold)}
 </div>
 <script>
 (()=>{
+
+// v70 (author): the whole interface scales as one piece — top, memory and bottom keep their proportions on any screen.
+// The game is laid out on a stage of design size (SW×SH) and scaled by Z; rects and pointers are read in stage units.
+const APP=document.getElementById('app');let Z=1,OX=0,OY=0,SW=390,SH=844;
+const toStage=r=>{const l=(r.left-OX)/Z,t=(r.top-OY)/Z,w=r.width/Z,h=r.height/Z;return {left:l,top:t,width:w,height:h,right:l+w,bottom:t+h,x:l,y:t};};
+Element.prototype.r=function(){return toStage(this.getBoundingClientRect());};
+Object.defineProperty(MouseEvent.prototype,'sx',{configurable:true,get(){return (this.clientX-OX)/Z;}});
+Object.defineProperty(MouseEvent.prototype,'sy',{configurable:true,get(){return (this.clientY-OY)/Z;}});
+const toClient=(x,y)=>({x:OX+x*Z,y:OY+y*Z});
 // ---------- Tuning (v69: «бот» everywhere; full clean no longer counts for stars (kept, off); specialisation taught on day 1 at ~35 s on the job in hand; rotate hint shows the ⟳ icon; v68: a «дальше» strip shows the next 4 waiting files at a readable size; a tutorial step is shown once and never comes back; v67: the rotate lesson only uses a file whose turn is visible (not a single cell or a square); v66: wide windows: one column like the phone, memory turned to 10×8 (author's idea); v65: the score breakdown is folded behind a small triangle next to the stars; v64: wide screens put memory in its own column beside the controls; the word «ПАМЯТЬ» scales with the board; tutorial cards never cover the file or catch presses; v63: «ПАМЯТЬ» behind the board (from the word list, for languages); day 3 teaches moving files to make clusters; slow time is taught only at a real jam — a burst of files on day 2; v62: stars from a 100-point score of how the shift was played (author-approved); v61: notes go to the developer; the type is chosen on the robot just bought; v60: every tutorial day starts with one robot; bright callouts (outline drawn behind the fill, a colour scheme per callout, always above the glow); v59: from 10 s on day 1 the game stops the instant a file is on the intake and waits until it is turned; v58: rotation was taught first; version shown on the start screen; v57: fix — a memory file turned in hand and dropped cleared the wrong cells (could reach outside the board and stop the game); v56: a coach step only starts when its target is really there (and nothing is held), and quietly withdraws if the target goes away; v55: while the tutorial is tuned nothing is remembered between loads (TUT_DEV): every load starts at day 1, the start screen picks any day; v54: tutorial days cannot be lost — gentle adaptive flow, robots given on days 3–4, no defeat by overflow; v53: «Пройти обучение заново» on the start screen and in pause; v52: day 1 is 60 s; v51: the day card waits for «Начать» — nothing moves until the player has read it; v50: every tutorial step is shown — the game freezes, the control is spotlit, a finger shows the gesture and waits; v49: no rules screen — four tutorial days teach by doing, one-line hints at the moment of need; v48: all six cluster finales are in play, each tied to its own event; v47: switching a robot to the type it is already working on speeds up the rest of that job (never slows); v46: «Замедлить» is a refilling reserve (3 s, +1 s per 5 s while off), tap to start/stop; credits buy +2 s capacity (15 cr., up to 3×); v45: «Замедлить» — buy 4 s of ×0.5 time for 15 cr. (stacks), neon button with a gold price tag in the intake panel; v44: cluster finale by size — ×2–3 defrag wave, ×4 defrag bar to 100%, ×5+ «+N FREE»; English callouts COMBO / GREAT / SUPER / MEGA DEFRAG!, COMBO HIT streak, OVERCLOCK, SYSTEM CLEAN, VIRUS PURGED; v43: clusters — touching files of one type go to work together when their oldest file's turn comes (−15% time); free specialists of that type join (×1.8 / ×2.5); COMBO burst; v42: a virus wakes at a random moment 5–30 s after placing, or when a robot reaches it; files that came during a threat and were not scanned carry «?» in memory too; the alert stays on while an awake virus is in memory; v41: pause muffles the music («under water»: quieter, low-pass) instead of stopping it; v40: fix — a track chosen in pause keeps playing (no preview cut-off); v39: infected files look «data corruption» (variant В, lighter): slight darkening, magenta outline, magenta bits running inside; infection travels as a stream of bits; v38: infected ×2, threats ≈50–53 s and ≈80–83 s (a short calm between), AV 1 cr. / 2 s; v37: shape numbers hidden on files (type only); v36: only AV can destroy viruses (a plain robot that touches a sleeping one wakes it); AV costs 1 cr. / 3 s and idles outside threats; «threat over — switch back» reminder; v35: AV scans only during a threat; threats moved to ≈55–60 s and ≈90 s, away from the 2nd-robot purchase; v34: viruses — announced threat windows, hidden viruses wake in memory and infect neighbours in a chain that stops at empty cells; AV robot scans the intake; trash removed; v33: juice — placed file settles with a springy bounce and flash; intake panel shakes on overflow; confetti on a win, memory powers down on a loss (dialog waits ~1 s); v32: sound (soft-plastic + hi-tech mix), lo-fi / synthwave music, iPhone vibration; settings in pause; v31: juice — bits stream while a robot works, a defrag wave + coin to the credits when a file is done, a pixel burst for RAW; v30: intake panel reaches the board — files, intake gauge, reserve bar and trash in one place; big ⟳ (1.5× a robot card); while a file is in hand the whole bottom bar turns it; v29: two hands — a ⟳ button for the holding thumb turns the file in hand (press while the other hand carries); left/right-handed layout; dip gesture retired; v28: dips deeper (3 cells) still count as a turn; the buy card glows when a robot is affordable and nudges after 4 s; v27: touch — turning the finger's path from down to up turns the file, no timing; while the finger dips the file holds its height; v26: click thresholds widened to the measured thumb (≈0.27 s, ≈78 px); v25: touch — a quick down-and-up 'click' of the thumb while carrying turns the file 90° clockwise around its centre; circle retired; v24: stop + circle; v22: touch — double tap on the file in hand turns it 90° around its centre; drop waits 0.25 s; v21: back to v17 placement (drop = placed, tap turns); on touch the file floats above the finger; v17: slow motion also while the robot fan is open (3 s cap); PNG gets U and big-T shapes; v15: slow reserve refill, piece outlines (idle flash + while dragging); v14: 10 s overflow grace with a countdown bar; labels «TYPE n»; v13: per-cell processing time, intake measured in cells (24), fan menu for robot types; earlier v12: v11 + slow motion while moving a file inside memory: game at ×0.5 for the first 3 s of each such drag) ----------
 const SLOW=0.5, SLOW_MAX=3;
 // v13: processing time = cells × seconds-per-cell of the type (then × specialist factor); intake overflows by cells, not files
@@ -325,7 +337,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v69', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v70', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -402,11 +414,13 @@ function place(file,ox,oy){const p={...file,ox,oy,order:S.order++,proc:null};if(
   const l=F(p.id);if(l){l.p=r1(S.time);l.x=ox;l.y=oy;l.out='placed';}tutPlaced();return p;}
 const fill=()=>S.grid.flat().filter(Boolean).length;
 
-function layout(){const app=$('app'),wide=COLS>ROWS;
-  const fit=()=>{const wrap=$('boardWrap').getBoundingClientRect();return Math.max(22,Math.floor(Math.min((wrap.width-6)/COLS,(wrap.height-6)/ROWS,wide?64:46)));};
-  if(wide){app.style.maxWidth='640px';cell=fit();for(let i=0;i<2;i++){app.style.maxWidth=Math.max(390,COLS*cell+6+32)+'px';cell=fit();}}
-  else{app.style.maxWidth='';cell=fit();}
-  board.style.width=COLS*cell+'px';board.style.height=ROWS*cell+'px';board.style.setProperty('--lbl',Math.floor(COLS*cell/(W('memory').length*0.92))+'px');if(L)L.device.cell=cell;
+function layout(){const wide=COLS>ROWS,CMIN=wide?44:36,DW=wide?10*CMIN+38:390,vw=innerWidth,vh=innerHeight,bw=$('boardWrap');
+  APP.classList.add('stage');APP.style.width=DW+'px';APP.style.height='1400px';APP.style.transform='none';
+  const chrome=APP.clientHeight-bw.clientHeight,need=chrome+ROWS*CMIN+6;
+  Z=Math.min(vw/DW,vh/need,2.2);SW=DW;SH=vh/Z;OX=Math.max(0,(vw-DW*Z)/2);OY=0;
+  APP.style.height=SH+'px';APP.style.transform=`translate(${OX}px,${OY}px) scale(${Z})`;
+  cell=Math.max(22,Math.floor(Math.min((bw.clientWidth-6)/COLS,(bw.clientHeight-6)/ROWS,wide?64:52)));
+  board.style.width=COLS*cell+'px';board.style.height=ROWS*cell+'px';board.style.setProperty('--lbl',Math.floor(COLS*cell/(W('memory').length*0.92))+'px');if(L){L.device.cell=cell;L.device.z=Math.round(Z*100)/100;}
   board.style.backgroundImage=`linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px)`;board.style.backgroundSize=`${cell}px ${cell}px`;render();}
 
 function drawShape(container,file,size,cls=''){
@@ -485,7 +499,7 @@ function render(){
   const left=Math.max(0,S.len-S.time);$('time').textContent=`${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
   $('pauseBtn').disabled=S.state!=='play';
   renderRobots();rotBtn.classList.toggle('idle',!drag?.moved);document.querySelector('.actions').classList.toggle('zone',!!drag?.moved);
-  $('status').textContent=`Ботов: ${S.bots.length} · свободно ${COLS*ROWS-fill()} из ${COLS*ROWS}`;
+  $('status').textContent=`Ботов: ${S.bots.length} · свободно ${COLS*ROWS-fill()}/${COLS*ROWS}`;
 }
 // Robot cards: tap to cycle the robot's favourite type (Любые → TMP → DOC → PNG → RAW). The last card buys a robot.
 const robotsEl=$('robots');let robotsKey='';
@@ -507,10 +521,10 @@ function renderRobots(force){if(!S)return;const price=PRICES[S.bots.length-1],bu
   // progress bars
   for(const b of S.bots){const bar=robotsEl.querySelector(`[data-bot="${b.id}"] .rbar`);const p=b.busy&&S.pieces.get(b.busy);if(bar)bar.style.width=b.scan?Math.min(100,100*b.scan.t/b.scan.dur)+'%':p?.proc?Math.min(100,100*p.proc.t/p.proc.dur)+'%':'0';}}
 // Fan menu: press a robot card → five choices fan out above it; slide to one and release (or tap, then tap a choice).
-const fan=document.createElement('div');fan.id='fan';fan.hidden=true;document.body.append(fan);
+const fan=document.createElement('div');fan.id='fan';fan.hidden=true;APP.append(fan);
 let fanState=null;
 function openFan(e,b,card){if(S?.state!=='play'||(e.pointerType==='mouse'&&e.button!==0))return;if(!DCFG().spec){e.preventDefault();hint('nospec','Специализация откроется на следующий день',card,{force:1,ttl:2500});return;}e.preventDefault();closeFan();
-  const r=card.getBoundingClientRect(),R=(DCFG().vir?PREFS.length:PREFS.length-1)>5?108:84,cx=Math.max(R+40,Math.min(innerWidth-R-40,r.left+r.width/2)),cy=r.top-6;
+  const r=card.r(),R=(DCFG().vir?PREFS.length:PREFS.length-1)>5?108:84,cx=Math.max(R+40,Math.min(SW-R-40,r.left+r.width/2)),cy=r.top-6;
   fan.replaceChildren();const opts=[];
   const PR=DCFG().vir?PREFS:PREFS.filter(x=>x!=='AV');
   PR.forEach((pf,i)=>{const a=Math.PI*(1-(i+0.5)/PR.length),x=cx+Math.cos(a)*R,y=cy-Math.sin(a)*R;
@@ -518,7 +532,7 @@ function openFan(e,b,card){if(S?.state!=='play'||(e.pointerType==='mouse'&&e.but
     o.style.background=pf?prefColor(pf):'var(--cream)';if(pf==='AV')o.style.color='#14123a';o.setAttribute('aria-label',pf?'Специалист '+pf:'Любые файлы');
     o.addEventListener('click',()=>{if(fanState?.sticky)pickFan(pf,'tap');});fan.append(o);opts.push({pf,x,y,el:o});});
   const hub=document.createElement('div');hub.className='fanhub';hub.style.left=cx+'px';hub.style.top=cy+'px';hub.textContent='Бот '+b.id;fan.append(hub);
-  fan.hidden=false;fanState={b,opts,pid:e.pointerId,t0:performance.now(),x0:e.clientX,y0:e.clientY,moved:false,hover:null,sticky:false};}
+  fan.hidden=false;fanState={b,opts,pid:e.pointerId,t0:performance.now(),x0:e.sx,y0:e.sy,moved:false,hover:null,sticky:false};}
 function fanHit(x,y){let best=null,bd=40;for(const o of fanState.opts){const d=Math.hypot(x-o.x,y-o.y);if(d<bd){bd=d;best=o;}}return best;}
 // v47 (author, 2026-10-25): specialisation may only speed up the job in hand, never slow it. A robot that took a DOC
 // as «Любые» and is then switched to DOC finishes the rest 20% faster; switching away keeps the job as it was.
@@ -529,10 +543,10 @@ function specBoost(b){if(!b.pref||b.pref==='AV')return;for(const p of S.pieces.v
 function pickFan(pf,how){const b=fanState.b;if(S.state==='play'&&b.pref!==pf){b.pref=pf;ev('pref',b.id,pf,how);specBoost(b);}closeFan();renderRobots(true);}
 function closeFan(){fan.hidden=true;fan.replaceChildren();fanState=null;}
 addEventListener('pointermove',e=>{if(!fanState||fanState.sticky||e.pointerId!==fanState.pid)return;
-  if(Math.hypot(e.clientX-fanState.x0,e.clientY-fanState.y0)>8)fanState.moved=true;
-  const h=fanHit(e.clientX,e.clientY);if(h!==fanState.hover){fanState.hover?.el.classList.remove('hot');h?.el.classList.add('hot');fanState.hover=h;}});
+  if(Math.hypot(e.sx-fanState.x0,e.sy-fanState.y0)>8)fanState.moved=true;
+  const h=fanHit(e.sx,e.sy);if(h!==fanState.hover){fanState.hover?.el.classList.remove('hot');h?.el.classList.add('hot');fanState.hover=h;}});
 addEventListener('pointerup',e=>{if(!fanState||fanState.sticky||e.pointerId!==fanState.pid)return;
-  const h=fanHit(e.clientX,e.clientY);if(h)return pickFan(h.pf,'slide');
+  const h=fanHit(e.sx,e.sy);if(h)return pickFan(h.pf,'slide');
   if(!fanState.moved&&performance.now()-fanState.t0<400){fanState.sticky=true;return;} // quick tap: keep the fan open for a tap choice
   closeFan();});
 addEventListener('pointerdown',e=>{if(fanState?.sticky&&!fan.contains(e.target))closeFan();},true);
@@ -632,8 +646,8 @@ function start(){const note=$('note');if(L&&note&&note.value.trim()!==(L.comment
 // A drop snaps to the nearest free position within one cell (pulled inside the board first).
 // A drag the system takes over (pointercancel) changes nothing.
 let drag=null, hoverSlot=0, lastDown='';
-const inside=(el,x,y)=>{const r=el.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;};
-function boardCellAt(cx,cy){const r=board.getBoundingClientRect();return {x:Math.floor((cx-r.left)/cell),y:Math.floor((cy-r.top)/cell),inside:inside(board,cx,cy)};}
+const inside=(el,x,y)=>{const r=el.r();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;};
+function boardCellAt(cx,cy){const r=board.r();return {x:Math.floor((cx-r.left)/cell),y:Math.floor((cy-r.top)/cell),inside:inside(board,cx,cy)};}
 function anchor(shape){const mx=Math.max(...shape.map(c=>c[0]))/2,my=Math.max(...shape.map(c=>c[1]))/2;return shape.reduce((b,c)=>Math.hypot(c[0]-mx,c[1]-my)<Math.hypot(b[0]-mx,b[1]-my)?c:b);}
 const NEAR=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
 function snap(shape,ox,oy,ignore=0){
@@ -645,9 +659,9 @@ function rotateQueued(id,why){const i=qIndex(id);if(i<0)return;tutEv(['rotate'])
 
 function beginDrag(e,from,file,gx,gy,slotEl){if(S?.coach?.dragOnly&&file.id!==S.coach.dragOnly)return;
   cancelDrag();
-  drag={from,id:file.id,file,gx,gy,off:{x:-(gx+.5)*cell,y:-(gy+.5)*cell},slotEl,shape0:file.shape,pointerId:e.pointerId,x0:e.clientX,y0:e.clientY,t0:performance.now(),moved:false,target:null,overTrash:false,
-    last:{clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType}};
-  drag.float=drawShape(document.body,file,cell,'float');drag.float.style.position='fixed';drag.float.style.display='none';
+  drag={from,id:file.id,file,gx,gy,off:{x:-(gx+.5)*cell,y:-(gy+.5)*cell},slotEl,shape0:file.shape,pointerId:e.pointerId,x0:e.sx,y0:e.sy,t0:performance.now(),moved:false,target:null,overTrash:false,
+    last:{sx:e.sx,sy:e.sy,pointerId:e.pointerId,pointerType:e.pointerType}};
+  drag.float=drawShape(APP,file,cell,'float');drag.float.style.position='fixed';drag.float.style.display='none';
   drag.ghost=drawShape(board,file,cell,'ghost');drag.ghost.style.display='none';
   try{e.currentTarget.setPointerCapture(e.pointerId);}catch(err){}
   try{window.focus();}catch(err){}
@@ -660,36 +674,36 @@ function cancelDrag(){if(!drag)return;const d=drag;drag=null;clearTimeout(d.lift
   render();}
 // v22 — the file in hand is positioned by its top-left corner (drag.off = corner − hold point), so it can turn
 // around its own centre. On touch the file floats above the finger.
-function holdPt(p){return {x:p.clientX,y:p.clientY-(p.pointerType==='touch'?1.3*cell:0)};}
+function holdPt(p){return {x:p.sx,y:p.sy-(p.pointerType==='touch'?1.3*cell:0)};}
 function moveDrag(e){if(!drag||e.pointerId!==drag.pointerId)return;if(S?.coach?.noDrag)return;
-  drag.last={clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType};
-  if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>(e.pointerType==='mouse'?6:14)&&!drag.moved){drag.moved=true;drag.movedAt=performance.now();if(drag.from==='board')S.slowDrags++;drag.float.style.display='';const l=F(drag.id);if(l)l.d++;
+  drag.last={sx:e.sx,sy:e.sy,pointerId:e.pointerId,pointerType:e.pointerType};
+  if(Math.hypot(e.sx-drag.x0,e.sy-drag.y0)>(e.pointerType==='mouse'?6:14)&&!drag.moved){drag.moved=true;drag.movedAt=performance.now();if(drag.from==='board')S.slowDrags++;drag.float.style.display='';const l=F(drag.id);if(l)l.d++;
     if(drag.from==='board')setCells(S.pieces.get(drag.id),0);render();}
-  if(drag.lift&&drag.lift.down){if(Math.hypot(e.clientX-drag.lift.down.x,e.clientY-drag.lift.down.y)>12)drag.lift.carry=true;else return;}
+  if(drag.lift&&drag.lift.down){if(Math.hypot(e.sx-drag.lift.down.x,e.sy-drag.lift.down.y)>12)drag.lift.carry=true;else return;}
   if(!drag.moved)return;
   const h=holdPt(e),tl={x:h.x+drag.off.x,y:h.y+drag.off.y};
   Object.assign(drag.float.style,{left:tl.x+'px',top:tl.y+'px'});
   drag.overTrash=false;
-  const r=board.getBoundingClientRect(),bx=r.left+board.clientLeft,by=r.top+board.clientTop;
+  const r=board.r(),bx=r.left+board.clientLeft,by=r.top+board.clientTop;
   const ox=Math.round((tl.x-bx)/cell),oy=Math.round((tl.y-by)/cell);
   drag.target=inside(board,h.x,h.y)?{ox,oy,spot:snap(drag.file.shape,ox,oy)}:null;
   const t=drag.target;
   if(t){const at=t.spot||t;Object.assign(drag.ghost.style,{display:'block',left:at.ox*cell+'px',top:at.oy*cell+'px'});drag.ghost.classList.toggle('bad',!t.spot);}else drag.ghost.style.display='none';}
 // rotate the file in hand by 90° around its own centre
 function rotateDrag(why){const d=drag;if(!d||!d.moved)return;const sh=d.file.shape,ns=rotate(sh),b0=shapeBox(sh,cell),b1=shapeBox(ns,cell);
-  const fl=d.float.getBoundingClientRect(),cx=fl.left+b0.w/2,cy=fl.top+b0.h/2,h=holdPt(d.last);
+  const fl=d.float.r(),cx=fl.left+b0.w/2,cy=fl.top+b0.h/2,h=holdPt(d.last);
   d.off={x:cx-b1.w/2-h.x,y:cy-b1.h/2-h.y};
   d.file={...d.file,shape:ns};if(d.from==='board')S.pieces.get(d.id).shape=ns;const l=F(d.id);if(l)l.r++;
-  d.float.remove();d.ghost.remove();d.float=drawShape(document.body,d.file,cell,'float');d.float.style.position='fixed';d.ghost=drawShape(board,d.file,cell,'ghost');d.ghost.style.display='none';
+  d.float.remove();d.ghost.remove();d.float=drawShape(APP,d.file,cell,'float');d.float.style.position='fixed';d.ghost=drawShape(board,d.file,cell,'ghost');d.ghost.style.display='none';
   const pid=d.pointerId;d.pointerId=d.last.pointerId;moveDrag(d.last);d.pointerId=pid;diag('поворот в руке: '+why);}
 // ---------- Juice (v31) ----------
 // Each effect has a meaning: bits flow while a robot reads a file; a finished file leaves in a defrag wave (blocks turn gold
 // one by one and click out) and its credits fly to the counter as a coin; a big RAW file bursts into pixels instead —
 // the loud effect is kept for rare moments. Visual only: the game state has already moved on when these play.
-const fxL=document.createElement('div');fxL.id='fx';document.body.append(fxL);
+const fxL=document.createElement('div');fxL.id='fx';APP.append(fxL);
 const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
 function fxEl(cls,x,y,w,h,extra){const e=document.createElement('div');e.className=cls;Object.assign(e.style,{left:x+'px',top:y+'px'},w!=null?{width:w+'px',height:h+'px'}:{},extra||{});fxL.append(e);return e;}
-function boardXY(){const r=board.getBoundingClientRect();return {x:r.left+board.clientLeft,y:r.top+board.clientTop};}
+function boardXY(){const r=board.r();return {x:r.left+board.clientLeft,y:r.top+board.clientTop};}
 let bitAcc=0;
 function fxBits(dt){if(REDUCED||S?.state!=='play')return;bitAcc+=dt;if(bitAcc<0.16)return;bitAcc=0;
   const o=boardXY();for(const p of S.pieces.values()){if(!p.proc)continue;const [x,y]=p.shape[Math.floor(Math.random()*p.shape.length)];
@@ -718,7 +732,7 @@ function fxDone(p){if(REDUCED){sfx(p.type==='RAW'?'burst':'coin');haptic(p.type=
     coinAt=cells.length*70+200;
   }
   setTimeout(()=>fxCoin(cx,cy),coinAt);}
-function fxCoin(x0,y0){const chip=$('credits').closest('.chip'),r=chip.getBoundingClientRect(),x1=r.left+r.width*.3,y1=r.top+r.height/2;
+function fxCoin(x0,y0){const chip=$('credits').closest('.chip'),r=chip.r(),x1=r.left+r.width*.3,y1=r.top+r.height/2;
   const c=fxEl('coin',x0,y0),dx=x1-x0,dy=y1-y0,lift=Math.min(80,Math.abs(dy)*.25+30);
   c.animate([{transform:'translate(0,0) scale(.4)'},{transform:`translate(${dx*.25}px,${dy*.25-lift}px) scale(1.1)`,offset:.3},{transform:`translate(${dx*.65}px,${dy*.65-lift*.6}px) scale(1)`,offset:.65},{transform:`translate(${dx}px,${dy}px) scale(.7)`}],{duration:520,easing:'ease-in'}).onfinish=()=>{c.remove();
     chip.animate([{transform:'scale(1)'},{transform:'scale(1.14)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});sfx('coin');haptic('light');};}
@@ -728,9 +742,9 @@ function fxCoin(x0,y0){const chip=$('credits').closest('.chip'),r=chip.getBoundi
 function fxPlace(id){if(REDUCED)return;requestAnimationFrame(()=>{const el=board.querySelector(`.piece[data-id="${id}"]`);if(!el)return;
   el.querySelectorAll('.cell').forEach((c,i)=>c.animate([{transform:'scale(1.16)',filter:'brightness(1.7)'},{transform:'scale(.94)',filter:'brightness(1.15)',offset:.45},{transform:'scale(1.03)',offset:.75},{transform:'scale(1)',filter:'brightness(1)'}],{duration:300,delay:i*12,easing:'ease-out'}));});}
 function fxShake(px){if(REDUCED)return;const t=$('tray');t.animate([{transform:'translateX(0)'},{transform:`translateX(${-px}px)`},{transform:`translateX(${px}px)`},{transform:`translateX(${-px*.6}px)`},{transform:`translateX(${px*.4}px)`},{transform:'translateX(0)'}],{duration:px>4?380:220,easing:'ease-out'});}
-const fxTop=document.createElement('div');fxTop.id='fxTop';document.body.append(fxTop);
+const fxTop=document.createElement('div');fxTop.id='fxTop';APP.append(fxTop);
 function fxEnd(win,show){if(REDUCED){show();return;}
-  if(win){const cols=Object.values(TYPES).map(t=>t.color).concat(['#ffd23d','#fff7e6']),W=innerWidth,H=innerHeight;
+  if(win){const cols=Object.values(TYPES).map(t=>t.color).concat(['#ffd23d','#fff7e6']),W=SW,H=SH;
     for(let k=0;k<70;k++){const s=6+Math.random()*7,x0=W*(.15+.7*Math.random()),e=document.createElement('div');e.className='conf';
       Object.assign(e.style,{left:x0+'px',top:H+10+'px',width:s+'px',height:s*(Math.random()<.5?1:1.8)+'px',background:cols[k%cols.length],borderRadius:Math.random()<.3?'50%':'2px'});fxTop.append(e);
       const up=H*(.45+.45*Math.random()),dx=(Math.random()-.5)*W*.5,rot=(Math.random()-.5)*900,dur=1700+Math.random()*900;
@@ -769,7 +783,7 @@ function fxCluster(ms,nbots=1,botIds=[]){sfx('burst');sfx('combo',ms.length);hap
   // order from the oldest file outwards (wave order)
   const L0=cells[0];cells.sort((a,b)=>Math.hypot(a.x-L0.x,a.y-L0.y)-Math.hypot(b.x-L0.x,b.y-L0.y));
   const cx=cells.reduce((a,c)=>a+c.x,0)/cells.length+cell/2,cy=cells.reduce((a,c)=>a+c.y,0)/cells.length+cell/2;
-  const br=board.getBoundingClientRect(),calloutAt=()=>fxCallout(lines,tier,br.left+br.width/2,Math.min(br.bottom-cell*1.2,Math.max(br.top+cell*1.2,cy+cell*1.6)));
+  const br=board.r(),calloutAt=()=>fxCallout(lines,tier,br.left+br.width/2,Math.min(br.bottom-cell*1.2,Math.max(br.top+cell*1.2,cy+cell*1.6)));
   if(REDUCED){calloutAt();fxCoin(cx,cy);return;}
   // v48 (author, 2026-11-11): every finale from the demo is in the game, each tied to its own event.
   // Priority: jackpot (7+ files) > chain (COMBO HIT) > teamwork (2–3 robots) > size ladder (5–6 / 4 / 2–3).
@@ -808,7 +822,7 @@ function fxCluster(ms,nbots=1,botIds=[]){sfx('burst');sfx('combo',ms.length);hap
     f.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${cx-cell/2-c.x}px,${cy-cell/2-c.y}px) scale(.45)`,background:'#bff5e4'}],{duration:420,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();});
   setTimeout(()=>freeStage(cx,cy),420);}
   if(mode==='V'){// robots eat: the cells stream as bits into the robots that worked on the cluster
-    const tg=(botIds.length?botIds:[1]).map(id=>robotsEl.querySelector(`[data-bot="${id}"]`)).filter(Boolean).map(el=>{const r=el.getBoundingClientRect();return {el,x:r.left+r.width/2,y:r.top+r.height*.4};});
+    const tg=(botIds.length?botIds:[1]).map(id=>robotsEl.querySelector(`[data-bot="${id}"]`)).filter(Boolean).map(el=>{const r=el.r();return {el,x:r.left+r.width/2,y:r.top+r.height*.4};});
     if(!tg.length){calloutAt();fxCoin(cx,cy);return;}
     cells.forEach((c,i)=>{const t=tg[i%tg.length],d=i*45,dx=t.x-(c.x+cell/2),dy=t.y-(c.y+cell/2);
       const f=fxEl('fxcell',c.x+2,c.y+2,cell-4,cell-4,{background:c.col,borderRadius:'6px'});
@@ -828,7 +842,7 @@ function fxCluster(ms,nbots=1,botIds=[]){sfx('burst');sfx('combo',ms.length);hap
     const amp=Math.min(9,3+n*1.2);board.animate([{transform:'translate(0,0)'},{transform:`translate(${-amp}px,${amp*.4}px)`},{transform:`translate(${amp*.8}px,${-amp*.5}px)`},{transform:`translate(${-amp*.5}px,${amp*.3}px)`},{transform:'translate(0,0)'}],{duration:340,delay:80});
     setTimeout(()=>{calloutAt();fxCoin(cx,cy);},420);return;}
 }
-function fxSpecial(text,kind,p){const br=board.getBoundingClientRect();let x=br.left+br.width/2,y=br.top+br.height*.42;
+function fxSpecial(text,kind,p){const br=board.r();let x=br.left+br.width/2,y=br.top+br.height*.42;
   if(p){const o=boardXY();x=o.x+(p.ox+.5)*cell;y=Math.max(br.top+cell,o.y+(p.oy-.5)*cell);}
   sfx(kind==='clean'?'win':'buy');haptic('success');if(REDUCED)return;fxCallout([{t:text}],kind==='clean'?'mega clean':'small '+kind,x,y);
   if(kind==='clean'){const g=fxEl('cleanglow',br.left,br.top,br.width,br.height);g.animate([{opacity:0},{opacity:.9},{opacity:0}],{duration:1100}).onfinish=()=>g.remove();}}
@@ -896,10 +910,10 @@ function vbits(p,n){const o=boardXY();for(let k=0;k<n;k++){const [x,y]=p.shape[M
 function fxVirusDone(p){sfx('avdel');haptic('medium');if(REDUCED)return;const o=boardXY();
   p.shape.forEach(([x,y],i)=>{const f=fxEl('fxcell',o.x+(p.ox+x)*cell+2,o.y+(p.oy+y)*cell+2,cell-4,cell-4,{background:'var(--vir)',borderRadius:'6px'});
     f.animate([{transform:'scale(1)',opacity:1},{transform:'scale(1.1) skewX(12deg)',opacity:1,offset:.3},{transform:'scale(.1) skewX(-20deg)',opacity:0}],{duration:380,delay:i*40}).onfinish=()=>f.remove();});vbits(p,12);}
-function fxCost(c){if(REDUCED)return;const chip=$('credits').closest('.chip'),r=chip.getBoundingClientRect();const e=fxEl('vbit',r.left+r.width*.55,r.bottom-4);e.style.color='#ff9cbf';e.style.fontSize='13px';e.textContent='−'+c;
+function fxCost(c){if(REDUCED)return;const chip=$('credits').closest('.chip'),r=chip.r();const e=fxEl('vbit',r.left+r.width*.55,r.bottom-4);e.style.color='#ff9cbf';e.style.fontSize='13px';e.textContent='−'+c;
   e.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(16px)',opacity:0}],{duration:800}).onfinish=()=>e.remove();}
 function fxAvDel(sl){if(REDUCED||!sl)return;sl.animate([{boxShadow:'0 0 0 0 rgba(255,61,127,0)'},{boxShadow:'0 0 0 4px #ff3d7f, 0 0 22px #ff3d7f'},{boxShadow:'0 0 0 0 rgba(255,61,127,0)'}],{duration:650});
-  const r=sl.getBoundingClientRect();for(let k=0;k<8;k++){const e=fxEl('vbit',r.left+r.width*(.2+.6*Math.random()),r.top+r.height*.5);e.textContent=Math.random()<.5?'0':'1';e.animate([{opacity:1},{transform:`translate(${(Math.random()-.5)*50}px,${-20-Math.random()*30}px)`,opacity:0}],{duration:650}).onfinish=()=>e.remove();}}
+  const r=sl.r();for(let k=0;k<8;k++){const e=fxEl('vbit',r.left+r.width*(.2+.6*Math.random()),r.top+r.height*.5);e.textContent=Math.random()<.5?'0':'1';e.animate([{opacity:1},{transform:`translate(${(Math.random()-.5)*50}px,${-20-Math.random()*30}px)`,opacity:0}],{duration:650}).onfinish=()=>e.remove();}}
 
 // ---------- Sound, music and vibration (v32) ----------
 // Direction (author, 2026-10-21): light and calm — soft «plastic» pops and marimba mixed with clean hi-tech glass and air;
@@ -1036,18 +1050,18 @@ let SEEN={};if(!TUT_DEV)try{SEEN=JSON.parse(localStorage.getItem('defrag-coach-v
 let hintEl=null,hintKey='',hintTimer=0,fingerEl=null;
 // one line near `anchor` (element or {x,y}); shown once per key unless opts.force; disappears after ttl or done(key)
 function hint(key,text,anchor,opts={}){if(!opts.force&&(SEEN[key]||PROG.hintsOff))return false;if(hintEl&&!opts.force){setTimeout(()=>hint(key,text,anchor,opts),1500);return false;}if(!opts.force){SEEN[key]=1;if(!TUT_DEV)try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}}
-  clearHint();const r=anchor?.getBoundingClientRect?anchor.getBoundingClientRect():{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y,width:0};
-  const h=document.createElement('div');h.className='hint';h.textContent=text;h.setAttribute('role','status');document.body.append(h);
+  clearHint();const r=anchor?.getBoundingClientRect?anchor.r():{left:anchor.x,right:anchor.x,top:anchor.y,bottom:anchor.y,width:0};
+  const h=document.createElement('div');h.className='hint';h.textContent=text;h.setAttribute('role','status');APP.append(h);
   const w=h.offsetWidth,ht=h.offsetHeight,cx=(r.left+r.right)/2,above=r.top-ht-14>8&&!opts.below;
-  const x=Math.max(8,Math.min(innerWidth-w-8,cx-w/2)),y=above?r.top-ht-12:r.bottom+12;
+  const x=Math.max(8,Math.min(SW-w-8,cx-w/2)),y=above?r.top-ht-12:r.bottom+12;
   Object.assign(h.style,{left:x+'px',top:y+'px','--ax':Math.max(14,Math.min(w-14,cx-x))+'px'});h.classList.add(above?'above':'below');
   if(!REDUCED)h.animate([{transform:'scale(.6)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.6},{transform:'scale(1)'}],{duration:260,easing:'ease-out'});
   hintEl=h;hintKey=key;if(!opts.force&&S)ev('hint',key);sfx('ready');haptic('light');
   clearTimeout(hintTimer);if(opts.ttl!==0)hintTimer=setTimeout(clearHint,opts.ttl||6000);return true;}
 function clearHint(){clearTimeout(hintTimer);hintEl?.remove();hintEl=null;hintKey='';}
 function done(key){if(hintKey===key)clearHint();}
-function finger(on){fingerEl?.remove();fingerEl=null;if(!on||REDUCED)return;const sl=slots[0],r0=sl.getBoundingClientRect(),br=board.getBoundingClientRect();
-  const f=document.createElement('div');f.className='tfinger';document.body.append(f);fingerEl=f;
+function finger(on){fingerEl?.remove();fingerEl=null;if(!on||REDUCED)return;const sl=slots[0],r0=sl.r(),br=board.r();
+  const f=document.createElement('div');f.className='tfinger';APP.append(f);fingerEl=f;
   const a={x:r0.left+r0.width/2,y:r0.top+r0.height/2},b={x:br.left+br.width/2,y:br.top+br.height*.45};
   f.animate([{left:a.x+'px',top:a.y+'px',opacity:0,offset:0},{left:a.x+'px',top:a.y+'px',opacity:1,offset:.15},{left:b.x+'px',top:b.y+'px',opacity:1,offset:.6},{left:b.x+'px',top:b.y+'px',opacity:1,offset:.75},{left:b.x+'px',top:b.y+'px',opacity:0,offset:1}],{duration:2400,iterations:Infinity,easing:'ease-in-out'});}
 function tutLabels(d){const c=DAYS[d];document.querySelector('#app .title h1').textContent=c.tut?'День '+d:'Defrag Bots';$('status').textContent=c.tut?`Обучение · день ${d} из 4`:'Смена · 2 минуты';}
@@ -1056,12 +1070,12 @@ function tutStart(){const c=DAYS[S.day];tutLabels(S.day);
   // v51 (author): the card stays until «Начать»; the game is frozen behind it (no files, no time)
   if(c.tut){S.waitCard=true;const veil=document.createElement('div');veil.className='dayveil';const d=document.createElement('div');d.className='daycard';
     d.innerHTML=`<div class="k">ДЕНЬ ${S.day} ИЗ 4 · ${c.len} СЕКУНД</div><h3>${c.title}</h3><ul>${c.lines.map(l=>'<li>'+l+'</li>').join('')}</ul><button type="button" class="primary">Начать</button>`;
-    veil.append(d);document.body.append(veil);if(!REDUCED)d.animate([{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)'}],{duration:220,easing:'ease-out'});
+    veil.append(d);APP.append(veil);if(!REDUCED)d.animate([{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)'}],{duration:220,easing:'ease-out'});
     const go=()=>{veil.remove();S.waitCard=false;last=performance.now();ev('day-start',S.day);
       if(S.waitFirst&&S.state==='play')firstSteps();};
     d.querySelector('button').onclick=go;setTimeout(()=>d.querySelector('button')?.focus(),50);
     // a finger taps «Начать» so it is clear what to press
-    if(!REDUCED)setTimeout(()=>{const bt=d.querySelector('button');if(!bt||!veil.isConnected)return;const q=bt.getBoundingClientRect(),f=document.createElement('div');f.className='tfinger';f.style.zIndex=97;veil.append(f);
+    if(!REDUCED)setTimeout(()=>{const bt=d.querySelector('button');if(!bt||!veil.isConnected)return;const q=bt.r(),f=document.createElement('div');f.className='tfinger';f.style.zIndex=97;veil.append(f);
       const x=q.left+q.width*.72,y=q.top+q.height*.6;f.animate([{left:x+'px',top:y+'px',transform:'scale(1)'},{left:x+'px',top:y+'px',transform:'scale(.7)',offset:.3},{left:x+'px',top:y+'px',transform:'scale(1)',offset:.6},{left:x+'px',top:y+'px',transform:'scale(1)'}],{duration:1200,iterations:Infinity});},700);}}
 // v58 (author): players move each file at once, so a rotate lesson later always comes too late. It goes first, while the
 // day waits for the first transfer: 1) turn the file on the intake (a press only turns it here), 2) drag it into memory.
@@ -1074,29 +1088,31 @@ let spotEl=null,coachEl=null;
 function coach(o){if(SEEN[o.key]||PROG.hintsOff)return false;if(S.coach)return false;
   SEEN[o.key]=1;if(!TUT_DEV)try{localStorage.setItem('defrag-coach-v50',JSON.stringify(SEEN));}catch(e){}
   clearHint();S.coach=o;o.t0=performance.now();ev('coach',o.key);sfx('ready');haptic('light');
-  spotEl=document.createElement('div');spotEl.className='spot';document.body.append(spotEl);
+  spotEl=document.createElement('div');spotEl.className='spot';APP.append(spotEl);
   coachEl=document.createElement('div');coachEl.className='coach';coachEl.setAttribute('role','status');
-  coachEl.innerHTML=`<div>${o.text}</div>`+(o.sub?`<small>${o.sub}</small>`:'')+(o.button?`<button type="button">${o.button}</button>`:'');document.body.append(coachEl);
+  coachEl.innerHTML=`<div>${o.text}</div>`+(o.sub?`<small>${o.sub}</small>`:'')+(o.button?`<button type="button">${o.button}</button>`:'');APP.append(coachEl);
   if(o.button)coachEl.querySelector('button').onclick=()=>endCoach('ok');
-  if(o.gesture){fingerEl?.remove();const f=document.createElement('div');f.className='tfinger'+(o.gesture==='hold'?' hold':'');document.body.append(f);fingerEl=f;}
+  if(o.gesture){fingerEl?.remove();const f=document.createElement('div');f.className='tfinger'+(o.gesture==='hold'?' hold':'');APP.append(f);fingerEl=f;}
   coachPos(true);if(!REDUCED&&coachEl)coachEl.animate([{transform:'scale(.7)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:220,easing:'ease-out'});return true;}
-function endCoach(why){const o=S?.coach;if(!o)return;S.coach=null;spotEl?.remove();coachEl?.remove();spotEl=coachEl=null;fingerEl?.remove();fingerEl=null;
+function endCoach(why){const o=S?.coach;if(!o)return;S.coach=null;try{o.cleanup?.();}catch(e){}spotEl?.remove();coachEl?.remove();spotEl=coachEl=null;fingerEl?.remove();fingerEl=null;
   ev('coach-done',o.key,why,r1((performance.now()-o.t0)/1000));last=performance.now();if(o.after)setTimeout(()=>{if(S?.state==='play')o.after();},250);}
-const rectOf=t=>{const el=typeof t==='function'?t():t;if(!el)return null;if(el.left!=null&&el.width!=null)return el;if(el.getBoundingClientRect){const r=el.getBoundingClientRect();return r.width||r.height?r:null;}return {left:el.x-20,top:el.y-20,right:el.x+20,bottom:el.y+20,width:40,height:40};};
+const rectOf=t=>{const el=typeof t==='function'?t():t;if(!el)return null;if(el.left!=null&&el.width!=null)return el;if(el.getBoundingClientRect){const r=el.r();return r.width||r.height?r:null;}return {left:el.x-20,top:el.y-20,right:el.x+20,bottom:el.y+20,width:40,height:40};};
 let fingerKey='';
 function coachPos(force){const o=S?.coach;if(!o||!spotEl)return;
   if(o.valid&&!drag&&!o.valid()){endCoach('gone');return;} /* v68 (author): a step is shown once and never comes back */const r=rectOf(o.target);if(!r)return;const pad=6;
   Object.assign(spotEl.style,{left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'});
   const ch=coachEl.offsetHeight,cw=coachEl.offsetWidth,above=r.top-ch-24>8,cx=(r.left+r.right)/2;
-  if(o.place==='auto'){const br=board.getBoundingClientRect(),mid=(r.top+r.bottom)/2,dest=o.to?(rectOf(o.to)?.top??mid):mid,low=mid>br.top+br.height/2||dest>br.top+br.height/2;
-    Object.assign(coachEl.style,{left:Math.max(8,Math.min(innerWidth-cw-8,br.left+br.width/2-cw/2))+'px',top:(low?Math.max(8,br.top+10):Math.min(innerHeight-ch-8,br.bottom-ch-10))+'px'});}
-  else if(o.place==='top'){const br=board.getBoundingClientRect();Object.assign(coachEl.style,{left:Math.max(8,Math.min(innerWidth-cw-8,br.left+br.width/2-cw/2))+'px',top:br.top+10+'px'});} // keeps the fan above the robot free
-  else Object.assign(coachEl.style,{left:Math.max(8,Math.min(innerWidth-cw-8,cx-cw/2))+'px',top:(above?r.top-ch-22:Math.min(innerHeight-ch-8,r.bottom+22))+'px'});
+  if(o.place==='off'){const br=board.r(),up=br.top,dn=SH-br.bottom,top=up>=dn?Math.max(8,(up-ch)/2):Math.min(SH-ch-8,br.bottom+Math.max(8,(dn-ch)/2));
+    Object.assign(coachEl.style,{left:Math.max(8,Math.min(SW-cw-8,br.left+br.width/2-cw/2))+'px',top:top+'px'});}
+  else if(o.place==='auto'){const br=board.r(),mid=(r.top+r.bottom)/2,dest=o.to?(rectOf(o.to)?.top??mid):mid,low=mid>br.top+br.height/2||dest>br.top+br.height/2;
+    Object.assign(coachEl.style,{left:Math.max(8,Math.min(SW-cw-8,br.left+br.width/2-cw/2))+'px',top:(low?Math.max(8,br.top+10):Math.min(SH-ch-8,br.bottom-ch-10))+'px'});}
+  else if(o.place==='top'){const br=board.r();Object.assign(coachEl.style,{left:Math.max(8,Math.min(SW-cw-8,br.left+br.width/2-cw/2))+'px',top:br.top+10+'px'});} // keeps the fan above the robot free
+  else Object.assign(coachEl.style,{left:Math.max(8,Math.min(SW-cw-8,cx-cw/2))+'px',top:(above?r.top-ch-22:Math.min(SH-ch-8,r.bottom+22))+'px'});
   if(!fingerEl||REDUCED)return;const k=Math.round(r.left)+','+Math.round(r.top)+','+Math.round(r.width);if(!force&&k===fingerKey)return;fingerKey=k;
-  fingerEl.getAnimations().forEach(a=>a.cancel());const c={x:cx,y:(r.top+r.bottom)/2};
+  fingerEl.getAnimations().forEach(a=>a.cancel());const fr=o.from?rectOf(o.from):null,c=fr?{x:(fr.left+fr.right)/2,y:(fr.top+fr.bottom)/2}:{x:cx,y:(r.top+r.bottom)/2};
   if(o.gesture==='tap')fingerEl.animate([{left:c.x+'px',top:c.y+'px',transform:'scale(1)'},{left:c.x+'px',top:c.y+'px',transform:'scale(.7)',offset:.3},{left:c.x+'px',top:c.y+'px',transform:'scale(1)',offset:.6},{left:c.x+'px',top:c.y+'px',transform:'scale(1)'}],{duration:1200,iterations:Infinity});
   else if(o.gesture==='hold')fingerEl.animate([{left:c.x+'px',top:c.y+'px',transform:'scale(1)'},{left:c.x+'px',top:c.y+'px',transform:'scale(.75)',offset:.15},{left:c.x+'px',top:c.y+'px',transform:'scale(.75)',offset:.85},{left:c.x+'px',top:c.y+'px',transform:'scale(1)'}],{duration:1800,iterations:Infinity});
-  else if(o.gesture==='drag'){const d=rectOf(o.to)||{left:c.x+80,right:c.x+80,top:c.y,bottom:c.y};const e={x:(d.left+d.right)/2,y:(d.top+d.bottom)/2};
+  else if(o.gesture==='drag'){const d=rectOf(o.to)||{left:c.x+80,right:c.x+80,top:c.y,bottom:c.y};const e={x:(d.left+d.right)/2,y:(d.top+d.bottom)/2+(matchMedia('(pointer:coarse)').matches?1.3*cell:0)}; /* v70: on touch the file rides 1.3 cells above the finger, so the finger ends below the place */
     fingerEl.animate([{left:c.x+'px',top:c.y+'px',opacity:0},{left:c.x+'px',top:c.y+'px',opacity:1,offset:.15},{left:e.x+'px',top:e.y+'px',opacity:1,offset:.6},{left:e.x+'px',top:e.y+'px',opacity:0,offset:.8},{left:e.x+'px',top:e.y+'px',opacity:0}],{duration:2400,iterations:Infinity,easing:'ease-in-out'});}}
 // what ends a step: tutEv gets every logged event
 function tutEv(a){const k=a[0],o=S?.coach;const m={'buy':'buy','pref':'spec','slow-on':'slow','rotate':'rotate','rot-btn':'rotate','rotate-key':'rotate'};if(m[k])done(m[k]);
@@ -1104,17 +1120,17 @@ function tutEv(a){const k=a[0],o=S?.coach;const m={'buy':'buy','pref':'spec','sl
 const pieceEl=id=>board.querySelector(`.piece[data-id="${id}"]`);
 // v64: the exact cells of a file in memory (its element can be larger than the file)
 const pieceRect=id=>{const p=S?.pieces.get(id);if(!p)return null;const o=boardXY(),xs=p.shape.map(c=>c[0]),ys=p.shape.map(c=>c[1]);const l=o.x+(p.ox+Math.min(...xs))*cell,t=o.y+(p.oy+Math.min(...ys))*cell,w=(Math.max(...xs)-Math.min(...xs)+1)*cell,h=(Math.max(...ys)-Math.min(...ys)+1)*cell;return {left:l,top:t,right:l+w,bottom:t+h,width:w,height:h};};
-const emptySpot=()=>{const br=board.getBoundingClientRect();for(let y=ROWS-1;y>=0;y--)for(let x=0;x<COLS;x++)if(!S.grid[y][x]&&!(S.grid[y][x-1])&&!(S.grid[y][x+1])&&!(S.grid[y-1]?.[x])&&!(S.grid[y+1]?.[x]))return {x:br.left+(x+.5)*cell,y:br.top+(y+.5)*cell};return {x:br.left+br.width/2,y:br.top+br.height-cell};};
+const emptySpot=()=>{const br=board.r();for(let y=ROWS-1;y>=0;y--)for(let x=0;x<COLS;x++)if(!S.grid[y][x]&&!(S.grid[y][x-1])&&!(S.grid[y][x+1])&&!(S.grid[y-1]?.[x])&&!(S.grid[y+1]?.[x]))return {x:br.left+(x+.5)*cell,y:br.top+(y+.5)*cell};return {x:br.left+br.width/2,y:br.top+br.height-cell};};
 // v69: a bot that has just started on a plain file and is not yet of its type
 function justTaken(){for(const b of S.bots){const p=b.busy&&S.pieces.get(b.busy),pr=p?.proc;if(pr&&pr.bot===b.id&&pr.t<.35&&!p.vir&&b.pref!==pr.type)return {bid:b.id,type:pr.type};}return null;}
 // v63: a pair for the move lesson — two idle files of one type that do not touch, and a place where the first fits beside the second
-function movePair(){const idle=[...S.pieces.values()].filter(p=>!p.proc&&!p.vir&&!p.awake);const br=board.getBoundingClientRect();
-  for(const a of idle)for(const b of idle){if(a===b||a.type!==b.type||neighbours(a).some(n=>n.id===b.id))continue;
+function movePair(){const idle=[...S.pieces.values()].filter(p=>!p.proc&&!p.vir&&!p.awake);const br=board.r();
+  for(const a of idle){if(clusterOf(a,idle).length>1)continue; /* v70 (author): a file already in a cluster is not asked to move */for(const b of idle){if(a===b||a.type!==b.type||clusterOf(b,idle).some(n=>n.id===a.id))continue;
     const bc=new Set(b.shape.map(([x,y])=>(b.ox+x)+','+(b.oy+y)));let best=null;
     for(let oy=0;oy<ROWS;oy++)for(let ox=0;ox<COLS;ox++){if(!fits(a.shape,ox,oy,a.id))continue;
       const touch=a.shape.some(([x,y])=>[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>bc.has((ox+x+dx)+','+(oy+y+dy))));if(!touch)continue;
       const d=Math.hypot(ox-a.ox,oy-a.oy);if(!best||d<best.d)best={ox,oy,d};}
-    if(best){const [ax,ay]=a.shape[0];return {a:a.id,b:b.id,spot:{x:br.left+board.clientLeft+(best.ox+ax+.5)*cell,y:br.top+board.clientTop+(best.oy+ay+.5)*cell}};}}
+    if(best){const [ax,ay]=a.shape[0];return {a:a.id,b:b.id,ox:best.ox,oy:best.oy,spot:{x:br.left+board.clientLeft+(best.ox+ax+.5)*cell,y:br.top+board.clientTop+(best.oy+ay+.5)*cell}};}}}
   return null;}
 // the steps, in order of the tutorial; each fires once (also in later days and in the full game if never seen)
 function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst||S.waitCard||drag)return; /* never start a step while a file is in hand */const c=DCFG(),T=S.tut,once=(k,f)=>{if(!T[k]&&f()){T[k]=1;return true;}return false;};
@@ -1133,9 +1149,13 @@ function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst||S.wait
   else if(S.day===1&&once('spec',()=>S.time>=35&&!!(T.job=justTaken()))){const {bid,type}=T.job; /* v69 (author): taught on day 1, the moment the bot takes a file */
     coach({key:'spec',text:touch?`Бот взял ${type}. Зажми бота и, не отпуская, веди палец к ${type}`:`Бот взял ${type}. Нажми на бота и выбери ${type}`,sub:'Бот своего типа берёт эти файлы первыми и делает их на 20% быстрее — этот файл тоже ускорится',
       target:()=>robotsEl.querySelector(`[data-bot="${bid}"]`),gesture:'hold',place:'top',until:a=>a[0]==='pref'&&a[1]===bid&&a[2]===type});}
-  else if(c.clusters&&!T.cluster&&S.time>=(T.cnext||0)&&((T.cnext=S.time+.5),true)&&once('cluster',()=>!!(T.mv=movePair()))){const {a,b,spot}=T.mv;
-    coach({key:'cluster',text:'Сдвинь этот файл к такому же — получится кластер!',sub:'Файлы в памяти можно переносить. Одинаковые файлы рядом уходят одним куском: быстрее, с ярким финалом. Пока несёшь файл из памяти, время идёт медленнее',
-      target:()=>pieceRect(a),valid:()=>S.pieces.has(a)&&S.pieces.has(b)&&!S.pieces.get(a)?.proc&&!S.pieces.get(b)?.proc,gesture:'drag',to:spot,dragOnly:a,place:'auto',until:x=>x[0]==='drop'&&x[1]==='board'&&x[2]===a&&x[3]==='moved'});}
+  else if(c.clusters&&!T.cluster&&S.time>=(T.cnext||0)&&((T.cnext=S.time+.5),true)&&once('cluster',()=>!!(T.mv=movePair()))){const {a,b,ox,oy}=T.mv,pa=S.pieces.get(a);
+    /* v70 (author): show HOW — the place it goes is drawn on the board, the light covers the file and that place, a finger carries it there, the card stays off the board */
+    const dest=drawShape(board,pa,cell,'ghost dest');Object.assign(dest.style,{left:ox*cell+'px',top:oy*cell+'px'});
+    const destRect=()=>{const o=boardXY(),xs=pa.shape.map(c=>c[0]),ys=pa.shape.map(c=>c[1]);const l=o.x+(ox+Math.min(...xs))*cell,t=o.y+(oy+Math.min(...ys))*cell;return {left:l,top:t,width:(Math.max(...xs)-Math.min(...xs)+1)*cell,height:(Math.max(...ys)-Math.min(...ys)+1)*cell,right:l+(Math.max(...xs)-Math.min(...xs)+1)*cell,bottom:t+(Math.max(...ys)-Math.min(...ys)+1)*cell};};
+    const both=()=>{const r=pieceRect(a),d=destRect();if(!r)return null;const l=Math.min(r.left,d.left),t=Math.min(r.top,d.top),R=Math.max(r.right,d.right),B=Math.max(r.bottom,d.bottom);return {left:l,top:t,right:R,bottom:B,width:R-l,height:B-t};};
+    coach({key:'cluster',text:touch?'Зажми файл и перетащи его к такому же — на подсвеченное место':'Возьми файл мышкой и перетащи к такому же — на подсвеченное место',sub:'Одинаковые файлы вплотную — это кластер: уходят одним куском, быстрее и с ярким финалом. Пока несёшь файл из памяти, время идёт медленнее',
+      target:both,from:()=>pieceRect(a),valid:()=>S.pieces.has(a)&&S.pieces.has(b)&&!S.pieces.get(a)?.proc&&!S.pieces.get(b)?.proc,gesture:'drag',to:destRect,dragOnly:a,place:'off',cleanup:()=>dest.remove(),until:x=>x[0]==='drop'&&x[1]==='board'&&x[2]===a&&x[3]==='moved'});}
   else if(c.vir&&once('threat',()=>!!threatNow())){const bot=S.bots.find(b=>b.pref!=='AV')||S.bots[0];
     coach({key:'threat',text:'В потоке вирус! Сделай одного бота антивирусом',sub:'Зажми бота и выбери зелёный AV. Он ловит вирусы, но тратит 1 кр. каждые 2 с',target:()=>robotsEl.querySelector(`[data-bot="${bot.id}"]`),gesture:'hold',place:'top',until:a=>a[0]==='pref'&&a[2]==='AV'});}
   else if(c.vir&&once('sus',()=>[...S.pieces.values()].some(p=>p.sus&&!p.awake))){const p=[...S.pieces.values()].find(p=>p.sus&&!p.awake);
@@ -1220,13 +1240,13 @@ rotBtn.addEventListener('contextmenu',e=>e.preventDefault());
 const LIFT_WAIT=250, DTAP_GAP=350, TAP_NEAR=1.5;
 function startLift(){const d=drag;clearTimeout(d.liftTimer);d.lift={taps:d.lift?.taps||[],down:null};d.pointerId=null;d.liftTimer=setTimeout(finishLift,d.lift.taps.length?DTAP_GAP:LIFT_WAIT);}
 function finishLift(){if(!drag?.lift||drag.lift.down)return;const d=drag;d.lift=null;finishDrag(null);}
-function nearFloat(x,y){const r=drag.float.getBoundingClientRect(),b=shapeBox(drag.file.shape,cell),m=TAP_NEAR*cell; // the float box itself has no size: use the shape's box
+function nearFloat(x,y){const r=drag.float.r(),b=shapeBox(drag.file.shape,cell),m=TAP_NEAR*cell; // the float box itself has no size: use the shape's box
   return x>=r.left-m&&x<=r.left+b.w+m&&y>=r.top-m&&y<=r.top+b.h+m;}
 addEventListener('pointerdown',e=>{const d=drag;if(!d?.lift)return;
-  if(!nearFloat(e.clientX,e.clientY)){clearTimeout(d.liftTimer);d.lift=null;finishDrag(null);return;} // a press elsewhere: place it and go on
+  if(!nearFloat(e.sx,e.sy)){clearTimeout(d.liftTimer);d.lift=null;finishDrag(null);return;} // a press elsewhere: place it and go on
   e.preventDefault();e.stopPropagation();clearTimeout(d.liftTimer);
-  d.lift.down={x:e.clientX,y:e.clientY,t:performance.now()};d.pointerId=e.pointerId;
-  const fl=d.float.getBoundingClientRect(),h=holdPt(e);d.off={x:fl.left-h.x,y:fl.top-h.y};d.last={clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,pointerType:e.pointerType};},true);
+  d.lift.down={x:e.sx,y:e.sy,t:performance.now()};d.pointerId=e.pointerId;
+  const fl=d.float.r(),h=holdPt(e);d.off={x:fl.left-h.x,y:fl.top-h.y};d.last={sx:e.sx,sy:e.sy,pointerId:e.pointerId,pointerType:e.pointerType};},true);
 function liftUp(e){const d=drag,L0=d.lift,dn=L0.down;L0.down=null;
   if(L0.carry){L0.carry=false;L0.taps=[];moveDrag(e);startLift();return;} // carried on and lifted again
   const now=performance.now();L0.taps=L0.taps.filter(t=>now-t<DTAP_GAP);L0.taps.push(now);
@@ -1243,8 +1263,8 @@ function endDrag(e){if(!drag||(e&&e.pointerId!==drag.pointerId))return;
 function finishDrag(e){if(!drag)return;
   const d=drag;drag=null;clearTimeout(d.liftTimer);cleanup(d);
   const p=d.from==='board'?S.pieces.get(d.id):null;
-  const dist=e?Math.round(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)):Math.round(Math.hypot(d.last.clientX-d.x0,d.last.clientY-d.y0)),ms=Math.round(performance.now()-d.t0);
-  const tap=!d.moved||(d.from==='queue'&&e&&d.slotEl&&inside(d.slotEl,e.clientX,e.clientY)&&ms<600);
+  const dist=e?Math.round(Math.hypot(e.sx-d.x0,e.sy-d.y0)):Math.round(Math.hypot(d.last.sx-d.x0,d.last.sy-d.y0)),ms=Math.round(performance.now()-d.t0);
+  const tap=!d.moved||(d.from==='queue'&&e&&d.slotEl&&inside(d.slotEl,e.sx,e.sy)&&ms<600);
   let outcome;
   if(tap){outcome='rotate';
     if(d.from==='queue'){const i=qIndex(d.id);if(i>=0){S.queue[i].shape=rotate(d.moved?d.shape0:S.queue[i].shape);const l=F(d.id);if(l)l.r++;}}
