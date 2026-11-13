@@ -226,7 +226,8 @@ button.primary{background:var(--gold)}
 @keyframes beam{from{top:12%}to{top:84%}}
 .slot.scanning{box-shadow:0 0 0 3px var(--av)}
 .rcard.av{background:#2a2f4f!important;color:#fff}
-.rcard .rstate{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.rcard .rstate{font-size:9.5px;font-weight:800;color:#fff;white-space:nowrap;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.rcard .rstate i{font-style:normal;font-weight:700;color:var(--muted);font-size:9px}
 .rcard.avnag{overflow:visible;animation:nag .8s ease-in-out infinite}
 .rcard.avnag .nagtip{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--av);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:900;white-space:nowrap;pointer-events:none}.rcard.av .rpref{background:var(--av);color:var(--ink)}.rcard.av .rbar{background:var(--av);opacity:1}
 .piece.virus .cell{background-color:var(--vir)!important;background-image:repeating-linear-gradient(45deg,rgba(20,18,58,.28) 0 4px,transparent 4px 8px)!important;color:transparent!important;box-shadow:0 0 12px rgba(255,61,127,.75);animation:vjit .5s steps(2) infinite}
@@ -275,6 +276,8 @@ button.primary{background:var(--gold)}
 @keyframes wink{from{transform:scale(1);box-shadow:0 0 0 3px #fff,0 3px 0 var(--ink)}to{transform:scale(1.2);box-shadow:0 0 0 5px #fff,0 0 18px 6px rgba(255,255,255,.75),0 3px 0 var(--ink)}}
 #board.fanfocus .piece:not(.mine):not(.ghost){filter:brightness(.5) saturate(.6)}
 #board .piece.mine{z-index:75}
+.piece.avscan .cell{box-shadow:0 0 0 3px var(--av),0 0 12px 2px var(--av)!important;animation:avsc .5s ease-in-out infinite alternate}
+@keyframes avsc{from{filter:brightness(1)}to{filter:brightness(1.3)}}
 #botOutl{position:absolute;left:0;top:0;pointer-events:none;z-index:76;overflow:visible}
 #botOutl .glow{fill:none;stroke:#fff;stroke-width:10;opacity:.22;filter:blur(4px)}
 #botOutl .line{fill:none;stroke:#fff;stroke-width:3.5;stroke-linejoin:round;animation:botbr 1s ease-in-out infinite alternate}
@@ -355,7 +358,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v76', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v77', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -529,6 +532,7 @@ function render(){
     el.classList.toggle('busy',!!p.proc);el.classList.toggle('virus',!!p.awake);el.classList.toggle('infected',!!p.infected);
     {const ci=CLU.get(p.id),inC=!!(ci||p.proc?.members?.length>1);el.classList.toggle('clu',inC);let tg=el.querySelector('.clutag');const showT=ci?.isLead||(p.proc?.members?.length>1&&p.proc.lead===p.id);
       if(showT){if(!tg){tg=document.createElement('div');tg.className='clutag';el.append(tg);}const n=ci?ci.n:p.proc.members.length,rb=p.proc?p.proc.bots.length:0;const txt='×'+n+(rb>1?' · '+rb+'🤖':'');if(tg.textContent!==txt)tg.textContent=txt;const [x,y]=p.shape[0];Object.assign(tg.style,{left:x*cell+3+'px',top:y*cell+cell-19+'px'});}else tg?.remove();}
+    el.classList.toggle('avscan',S.bots.some(b=>b.scan?.mem&&b.scan.id===p.id));
     {let sq=el.querySelector('.susb');const showQ=p.sus&&!p.scan&&!p.awake;if(showQ&&!sq){const [x,y]=p.shape[0];sq=document.createElement('div');sq.className='susb';sq.textContent='?';Object.assign(sq.style,{left:x*cell+cell-13+'px',top:y*cell-7+'px'});el.append(sq);}else if(!showQ&&sq)sq.remove();}
     {let bug=el.querySelector('.bugb');if(p.awake&&!bug){const [x,y]=p.shape[0];bug=document.createElement('div');bug.className='bugb';bug.innerHTML=BUG_SVG;Object.assign(bug.style,{left:x*cell+cell-14+'px',top:y*cell-8+'px'});el.append(bug);}else if(!p.awake&&bug)bug.remove();}
     let badge=el.querySelector('.badge'),ring=el.querySelector('.ring');
@@ -552,11 +556,12 @@ function renderRobots(force){if(!S)return;const price=PRICES[S.bots.length-1],bu
   if(can&&S.readyFor!==S.bots.length){S.readyFor=S.bots.length;S.readyAt=S.time;ev('buy-ready',S.bots.length+1,S.credits);}
   if(!can&&S.readyFor===S.bots.length&&S.credits<price)S.readyFor=null;
   const nag=can&&S.time-S.readyAt>=NAG_AFTER;
-  const avState=b=>b.pref!=='AV'?'':S.credits<=0?'нет кр.':b.scan?'проверка':b.busy&&S.pieces.get(b.busy)?.proc?'удаляет':'ждёт';
+  const avState=b=>{if(b.pref!=='AV')return '';const p=b.busy&&S.pieces.get(b.busy); /* v77: honest — an AV finishing its old job says so (it keeps the speed it started with) */
+    if(p?.proc)return p.vir?'удаляет':'доделывает';if(S.credits<=0)return 'нет кр.';return b.scan?(b.scan.mem?'скан памяти':'скан входа'):'ждёт';};
   const key=S.bots.map(b=>b.id+(b.pref||'*')+avState(b)).join()+'|'+S.bots.length+'|'+can+'|'+nag+'|'+!!S.avNag+'|'+S.state;
   if(force||key!==robotsKey){robotsKey=key;robotsEl.replaceChildren();
     for(const b of S.bots){const c=document.createElement('button');c.className='rcard'+(b.pref==='AV'?' av':'')+(b.pref==='AV'&&S.avNag?' avnag':'');c.dataset.bot=b.id;c.style.background=b.pref?prefColor(b.pref):'var(--cream)';
-      c.innerHTML=`<span class="rname">Бот ${b.id}</span><span class="rpref">${b.pref||'Любые'}</span>`+(b.pref==='AV'?`<span class="rstate">${avState(b)} · −1/2с</span>`:'')+(b.pref==='AV'&&S.avNag?'<span class="nagtip">Угроза снята — верните бота</span>':'')+`<span class="rbar"></span>`;
+      c.innerHTML=`<span class="rname">Бот ${b.id}</span><span class="rpref">${b.pref||'Любые'}</span>`+(b.pref==='AV'?`<span class="rstate">${avState(b)}<i>−1 кр. / 2 с</i></span>`:'')+(b.pref==='AV'&&S.avNag?'<span class="nagtip">Угроза снята — верните бота</span>':'')+`<span class="rbar"></span>`;
       c.setAttribute('aria-label',`Бот ${b.id}: ${b.pref?'специалист '+b.pref:'берёт любые файлы'}. Нажмите, чтобы сменить тип`);
       c.addEventListener('pointerdown',e=>openFan(e,b,c));robotsEl.append(c);}
     if(S.bots.length<MAXR&&buyOk){const c=document.createElement('button');c.id='buy';c.className='rcard buy'+(can?' ready':'')+(nag?' nag':'');c.disabled=!can&&S.state!=='play';
@@ -626,7 +631,7 @@ function tickInner(now){
         if(pr){pr.bots.push(b.id);b.busy=pr.lead;ev('cluster-join',pr.lead,b.id,pr.bots.length);continue;}}
       // AV only hunts awake viruses; every other robot skips them (it cannot destroy a virus)
       const pool=b.pref==='AV'?idle.filter(p=>p.vir&&p.awake):idle.filter(p=>!(p.vir&&p.awake));
-      let p=b.pref&&b.pref!=='AV'?pool.find(q=>q.type===b.pref):null;if(!p)p=pool[0];if(!p)continue;
+      let p=b.pref&&b.pref!=='AV'?pool.find(q=>q.type===b.pref):null;if(!p)p=pool[0];if(!p&&b.pref==='AV'&&avStartMemScan(b))continue;if(!p)continue;
       if(p.vir&&b.pref!=='AV'){idle.splice(idle.indexOf(p),1);wakeVirus(p,'touched',b.id);continue;} // a plain robot picks up a hidden virus: it wakes
       // the whole cluster of this file goes to work with it; hidden viruses inside it wake and stay behind
       let members=p.vir?[p]:clusterOf(p,idle);
@@ -962,7 +967,16 @@ function virusTick(dt){
 function wakeVirus(p,why,bot){p.awake=1;p.spreadAt=S.time+V_SPREAD;S.vs.woke++;ev('virus-wake',p.id,why,bot);fxVirusWake(p);sfx('glitch');haptic('warning');}
 function avStartScan(b){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
   for(let i=0;i<Math.min(VIS,S.queue.length);i++){const f=S.queue[i];if(!f.sus||f.scan||taken.has(f.id)||(drag&&drag.id===f.id))continue;b.scan={id:f.id,t:0,dur:V_SCAN};b.busy=null;return true;}return false;}
+// v77 (author): when the intake has nothing to check and no virus is awake, the AV checks the «?» files lying in memory,
+// one at a time, oldest first; after each one it looks at the intake again (the intake always comes first)
+function avStartMemScan(b){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
+  const p=[...S.pieces.values()].filter(q=>q.sus&&!q.scan&&!q.proc&&!q.awake&&!taken.has(q.id)&&!(drag?.moved&&drag.id===q.id)).sort((a,c)=>a.order-c.order)[0];
+  if(!p)return false;b.scan={id:p.id,t:0,dur:V_SCAN,mem:1};b.busy=null;return true;}
 function avTick(dt){for(const b of S.bots){if(!b.scan)continue;if(b.pref!=='AV'){b.scan=null;continue;}
+  if(b.scan.mem){const p=S.pieces.get(b.scan.id);if(!p||p.proc||p.awake||(drag?.moved&&drag.id===p.id)){b.scan=null;continue;}
+    b.scan.t+=dt;if(b.scan.t<b.scan.dur)continue;b.scan=null;S.vs.scanned++;
+    if(p.vir){fxVirusDone(p);setCells(p,0);S.pieces.delete(p.id);S.credits+=V_BONUS;S.vs.avDel++;S.vs.avDelMem=(S.vs.avDelMem||0)+1;const l=F(p.id);if(l)l.out='av-deleted-mem';ev('av-del-mem',p.id,b.id);sfx('avdel');haptic('success');}
+    else{p.scan=1;ev('scan-mem',p.id,b.id);sfx('scan');}continue;}
   const i=S.queue.findIndex(f=>f.id===b.scan.id),f=S.queue[i];if(!f||i>=VIS||(drag&&drag.id===f.id)){b.scan=null;continue;}
   b.scan.t+=dt;if(b.scan.t<b.scan.dur)continue;b.scan=null;S.vs.scanned++;
   if(f.vir){S.queue.splice(i,1);S.credits+=V_BONUS;S.vs.avDel++;const l=F(f.id);if(l)l.out='av-deleted';ev('av-del',f.id,b.id);fxAvDel(slots[i]);sfx('avdel');haptic('success');}
@@ -1243,7 +1257,7 @@ function tutTick(){if(!S||S.state!=='play'||!S.tut||S.coach||S.waitFirst||S.wait
   else if(c.vir&&once('threat',()=>!!threatNow())){const bot=S.bots.find(b=>b.pref!=='AV')||S.bots[0];
     coach({key:'threat',text:'В потоке вирус! Сделай одного бота антивирусом',sub:'Зажми бота и выбери зелёный AV. Он ловит вирусы, но тратит 1 кр. каждые 2 с',target:()=>robotsEl.querySelector(`[data-bot="${bot.id}"]`),gesture:'hold',place:'off',want:'AV',until:a=>a[0]==='pref'&&a[2]==='AV'});}
   else if(c.vir&&once('sus',()=>[...S.pieces.values()].some(p=>p.sus&&!p.awake))){const p=[...S.pieces.values()].find(p=>p.sus&&!p.awake);
-    coach({key:'sus',text:'«?» — файл пришёл во время угрозы, он может быть вирусом',sub:'Антивирус проверит его и снимет «?»',place:'auto',target:()=>pieceRect(p.id),valid:()=>S.pieces.has(p.id),button:'Понятно'});}
+    coach({key:'sus',text:'«?» — файл пришёл во время угрозы, он может быть вирусом',sub:'Антивирус проверит его — на входе или прямо в памяти — и снимет «?». Ждать не нужно',place:'auto',target:()=>pieceRect(p.id),valid:()=>S.pieces.has(p.id),button:'Понятно'});}
   else if(c.vir&&once('awake',()=>[...S.pieces.values()].some(p=>p.awake))){const p=[...S.pieces.values()].find(p=>p.awake);
     coach({key:'awake',text:'Вирус проснулся! Перетащи его подальше от соседей',sub:'Иначе он заразит их. Антивирус его удалит',place:'auto',target:()=>pieceRect(p.id),valid:()=>S.pieces.has(p.id),gesture:'drag',to:emptySpot(),until:a=>(a[0]==='drop'&&a[2]===p.id)||(a[0]==='virus-killed'&&a[1]===p.id),button:'Понятно'});}
   else if(c.slowUp&&once('slowup',()=>S.slowShown&&S.credits>=40&&S.slowUps===0&&S.bots.length>=MAXR))
