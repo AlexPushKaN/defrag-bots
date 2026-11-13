@@ -268,8 +268,11 @@ button.primary{background:var(--gold)}
 @keyframes wink{from{transform:scale(1);box-shadow:0 0 0 3px #fff,0 3px 0 var(--ink)}to{transform:scale(1.2);box-shadow:0 0 0 5px #fff,0 0 18px 6px rgba(255,255,255,.75),0 3px 0 var(--ink)}}
 #board.fanfocus .piece:not(.mine):not(.ghost){filter:brightness(.5) saturate(.6)}
 #board .piece.mine{z-index:75}
-.piece.mine .cell{box-shadow:0 0 0 3px #fff,0 0 16px 5px rgba(255,255,255,.65)!important;animation:minep .7s ease-in-out infinite alternate}
-@keyframes minep{from{filter:brightness(1)}to{filter:brightness(1.35)}}
+#botOutl{position:absolute;left:0;top:0;pointer-events:none;z-index:76;overflow:visible}
+#botOutl .glow{fill:none;stroke:#fff;stroke-width:10;opacity:.22;filter:blur(4px)}
+#botOutl .line{fill:none;stroke:#fff;stroke-width:3.5;stroke-linejoin:round;animation:botbr 1s ease-in-out infinite alternate}
+@keyframes botbr{from{opacity:.6}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){#botOutl .line{animation:none}}
 .learned{font-weight:800;color:var(--ink)}
 #fan .fanhub{position:absolute;transform:translate(-50%,-100%);font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 0 var(--ink);white-space:nowrap}
 @keyframes fanin{from{transform:scale(.4);opacity:0}}
@@ -345,7 +348,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v71', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v72', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -471,6 +474,18 @@ function setAlarm(mode,left){if(!mode){if(!alarm.hidden)alarm.hidden=true;return
   alarm.querySelector('span').textContent=mode==='over'?'Вход переполнен — освободите место':'Запас на переполнение восстанавливается';
   alarm.querySelector('b').textContent=left.toFixed(1).replace('.',',')+' с';alarm.querySelector('i').style.width=Math.max(0,100*left/GRACE)+'%';}
 // ---------- Piece outlines: a glow drawn on top of the cells (cells stay as they are) ----------
+// v72 (author): the area a bot works on gets ONE clean white contour (concept «А»), pushed out a little, round corners
+const botOutl=document.createElementNS('http://www.w3.org/2000/svg','svg');botOutl.id='botOutl';botOutl.setAttribute('aria-hidden','true');
+function areaPath(cells,d,r){const has=new Set(cells.map(c=>c+''));const E=[];
+  for(const [x,y] of cells){if(!has.has([x,y-1]+''))E.push([[x,y],[x+1,y]]);if(!has.has([x+1,y]+''))E.push([[x+1,y],[x+1,y+1]]);if(!has.has([x,y+1]+''))E.push([[x+1,y+1],[x,y+1]]);if(!has.has([x-1,y]+''))E.push([[x,y+1],[x,y]]);}
+  let out='';while(E.length){let cur=E.shift();const loop=[cur[0]];for(;;){const i=E.findIndex(e=>e[0]+''===cur[1]+'');if(i<0)break;loop.push(cur[1]);cur=E.splice(i,1)[0];}
+    const pts=loop.filter((p,i)=>{const a=loop[(i-1+loop.length)%loop.length],b=loop[(i+1)%loop.length];return !((a[0]===p[0]&&p[0]===b[0])||(a[1]===p[1]&&p[1]===b[1]));});const n=pts.length;if(n<3)continue;
+    const o=pts.map((p,i)=>{const a=pts[(i-1+n)%n],b=pts[(i+1)%n],di=[Math.sign(p[0]-a[0]),Math.sign(p[1]-a[1])],dq=[Math.sign(b[0]-p[0]),Math.sign(b[1]-p[1])];const m=2.5,cl=(v,M)=>Math.max(m,Math.min(M-m,v));return [cl(p[0]*cell+(di[1]+dq[1])*d,COLS*cell),cl(p[1]*cell+(-di[0]-dq[0])*d,ROWS*cell)];}); /* at the memory's edge the line stays inside */
+    for(let i=0;i<n;i++){const p=o[i],a=o[(i-1+n)%n],b=o[(i+1)%n],la=Math.hypot(p[0]-a[0],p[1]-a[1]),lb=Math.hypot(b[0]-p[0],b[1]-p[1]),rr=Math.min(r,la/2,lb/2);
+      out+=(i?'L':'M')+(p[0]+(a[0]-p[0])/la*rr).toFixed(1)+' '+(p[1]+(a[1]-p[1])/la*rr).toFixed(1)+'Q'+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '+(p[0]+(b[0]-p[0])/lb*rr).toFixed(1)+' '+(p[1]+(b[1]-p[1])/lb*rr).toFixed(1);}out+='Z';}return out;}
+function drawBotOutl(fb){if(!fb){if(botOutl.isConnected)botOutl.remove();return;}const cells=[];for(const p of S.pieces.values())if(p.proc&&p.proc.bots.includes(fb))for(const [x,y] of p.shape)cells.push([p.ox+x,p.oy+y]);
+  if(!cells.length){botOutl.remove();return;}const d=areaPath(cells,4,Math.round(cell*.24));botOutl.setAttribute('width',COLS*cell);botOutl.setAttribute('height',ROWS*cell);
+  if(botOutl.dataset.d!==d){botOutl.dataset.d=d;botOutl.innerHTML=`<path class="glow" d="${d}"/><path class="line" d="${d}"/>`;} /* redrawn only when the area changes, so the breathing runs on */if(!botOutl.isConnected)board.append(botOutl);}
 const outl=document.createElementNS('http://www.w3.org/2000/svg','svg');outl.id='outl';outl.setAttribute('aria-hidden','true');board.append(outl);
 let outlKey='',flashT=-1e9,lastInput=performance.now(),lastFlash=-1e9;
 function outlinePath(skip){let d='';for(const p of S.pieces.values()){if(p.id===skip)continue;const own=new Set(p.shape.map(([x,y])=>x+','+y));
@@ -492,7 +507,7 @@ function render(){
   updateOutlines();
   board.querySelectorAll('.piece:not(.ghost)').forEach(e=>{if(!S.pieces.has(+e.dataset.id)||(drag?.moved&&drag.id===+e.dataset.id))e.remove();});
   const CLU=clustersNow(),fb=fanState?.b?.id; /* v71 (author): while a bot's fan is open, its files in memory are lit and the rest dims */
-  board.classList.toggle('fanfocus',!!fanState);
+  board.classList.toggle('fanfocus',!!fanState);drawBotOutl(fb);
   for(const p of S.pieces.values()){
     if(drag?.moved&&drag.from==='board'&&drag.id===p.id)continue;
     let el=board.querySelector(`.piece[data-id="${p.id}"]`);if(el)el.classList.toggle('mine',!!(fb&&p.proc&&p.proc.bots.includes(fb)));
