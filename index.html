@@ -355,7 +355,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v73', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v75', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -427,8 +427,9 @@ function reset(){
   const day=curDay();
   S={day,len:DAYS[day].len,waitFirst:day===1,slowShown:!DAYS[day].tut||day>=3||!!SEEN.slow,over:0,reserve:GRACE,flashes:0,overflows:0,time:0,credits:0,spent:0,bots:[{id:1,pref:null,busy:null}],slowRes:SLOW_CAP0,slowCap:SLOW_CAP0,slowUps:0,slowOn:false,vs:{arrived:0,scanned:0,avDel:0,placed:0,woke:0,infected:0,killed:0,avCost:0},threats:[],queue:[],pieces:new Map(),grid:Array.from({length:ROWS},()=>Array(COLS).fill(0)),spawn:1.0,state:'play',moves:0,done:0,order:0,trashed:0,slowT:0,slowDrags:0,nextSample:0};
   if(DAYS[day].robots)S.bots=Array.from({length:DAYS[day].robots},(_,i)=>({id:i+1,pref:null,busy:null}));
-  S.waves=DAYS[day].waves?planWaves():DAYS[day].burst?[{at:DAYS[day].burst,dur:1.5,burst:1,name:'Большая выгрузка',types:['RAW','PNG','DOC']}]:[];S.laneKey='';S.funNext=12+Math.random()*6;
+  S.waves=null;
   S.threats=DAYS[day].vir==='full'?planThreats():DAYS[day].vir==='one'?[{start:38,end:38+V_WIN,left:2,on:false}]:[];
+  S.waves=DAYS[day].waves?planWaves(S.threats):DAYS[day].burst?[{at:DAYS[day].burst,dur:1.5,burst:1,name:'Большая выгрузка',types:['RAW','PNG','DOC']}]:[];S.laneKey='';S.funNext=12+Math.random()*6;
   S.queue.push(newFile(),newFile(),newFile());
   if(day===1){const f=S.queue[0];f.type='DOC';f.si=0;f.shape=TYPES.DOC.shapes[0].map(c=>[...c]);const l=F(f.id);if(l){l.ty='DOC';l.si=0;}} // v58: the first file shows its turn clearly (an L, not a single square)
   board.querySelectorAll('.piece,.pop').forEach(e=>e.remove());
@@ -439,7 +440,7 @@ function place(file,ox,oy){const p={...file,ox,oy,order:S.order++,proc:null};if(
   const l=F(p.id);if(l){l.p=r1(S.time);l.x=ox;l.y=oy;l.out='placed';}tutPlaced();return p;}
 const fill=()=>S.grid.flat().filter(Boolean).length;
 
-function layout(){const wide=COLS>ROWS,CMIN=wide?44:36,DW=wide?10*CMIN+38:390,vw=innerWidth,vh=innerHeight,bw=$('boardWrap');
+function layout(){const wide=COLS>ROWS,CMIN=44,DW=wide?10*CMIN+38:8*CMIN+38 /* v75 (author): the memory is always as wide as the panels — a short screen shrinks everything instead */,vw=innerWidth,vh=innerHeight,bw=$('boardWrap');
   APP.classList.add('stage');APP.style.width=DW+'px';APP.style.height='1400px';APP.style.transform='none';
   const chrome=APP.clientHeight-bw.clientHeight,need=chrome+ROWS*CMIN+6;
   Z=Math.min(vw/DW,vh/need,2.2);SW=DW;SH=vh/Z;OX=Math.max(0,(vw-DW*Z)/2);OY=0;
@@ -608,6 +609,7 @@ function tickInner(now){
     if(DCFG().burst&&!S.burstDone&&S.time>=DCFG().burst&&!drag){S.burstDone=1;const big=[['RAW',TYPES.RAW.shapes[3]],['RAW',TYPES.RAW.shapes[2]],['PNG',TYPES.PNG.shapes[1]],['DOC',TYPES.DOC.shapes[5]]]; /* 10+8+6+5 = 29 cells, over 24 even with an empty intake */
       for(const [ty,sh] of big){const f={id:nextId++,type:ty,si:0,shape:sh.map(c=>[...c])};logArrive(f);S.queue.push(f);}ev('burst',qCells());fxShake(5);sfx('alarm');}
     S.spawn-=dt;if(S.spawn<=0&&DCFG().tut&&qCells()>=QCELLS-6)S.spawn=.4;
+    if(S.spawn<=0&&S.waves.some(w=>!w.burst&&S.time>=w.at+w.dur&&S.time<w.at+w.dur+WAVE_REST))S.spawn=.05; /* v74: breather after a wave */
     if(S.spawn<=0){const k=Math.min(1,S.time/S.len),fl=DCFG().flow,wv=waveNow();S.spawn=(fl[0]-(fl[0]-fl[1])*k)*(DCFG().tut?1+Math.max(0,fill()/(COLS*ROWS)-.45)*3:1)*(DCFG().waves?(wv?WAVE_RATE[wv.type]:WAVE_BASE):1);S.queue.push(maybeVirus(newFile(),S.spawn));}
     // robots: a specialist takes the oldest file of its type first, otherwise the oldest file of any type;
     // specialists choose before universal robots so a universal robot doesn't steal their files
@@ -897,15 +899,17 @@ const BUG_SVG='<svg viewBox="0 0 20 20" width="100%" height="100%" aria-hidden="
 function prefColor(pf){return pf==='AV'?'var(--av)':TYPES[pf].color;}
 // v73 (author): waves — a real, planned rush of one type, announced WAVE_LEAD s ahead in the lane, so the player can act
 // (free room, keep slow time, make a bot of that type). Names are the flavour. Base flow is a little slower to pay for them.
-const WAVE_LEAD=8, WAVE_DUR=6, WAVE_BASE=1.12;
-// a wave brings ~1.8× the usual cells per second: small TMP come much more often, big RAW at the usual pace (but all big)
-const WAVE_RATE={TMP:.3,DOC:.55,PNG:.65,RAW:1};
+// v74 (author's log: «еле прошёл»): a wave brings ~1.5× the usual cells per second (not 1.8×), then WAVE_REST s with no new files —
+// rush, then a breather to clear the intake. Extra cells of a wave ≈ the cells the breather skips, so the shift's load stays as before waves.
+const WAVE_LEAD=8, WAVE_DUR=6, WAVE_REST=3.5, WAVE_BASE=1;
+const WAVE_RATE={TMP:.35,DOC:.66,PNG:.77,RAW:1.2};
 const WAVE_NAMES={DOC:['Архив бухгалтерии','Договоры от юристов','Идёт годовой отчёт'],
   PNG:['Фото с корпоратива','Мемы с котами','Гора скриншотов'],
   RAW:['Свадьба в RAW','Съёмка с дрона','Аудиобиблиотека'],
   TMP:['Браузер чистит кэш','Распаковка обновления','Установщик мусорит']};
-function planWaves(){const out=[];let t=18+Math.random()*6,last='';while(t<SHIFT-14){const ks=Object.keys(WAVE_NAMES).filter(k=>k!==last),ty=ks[Math.floor(Math.random()*ks.length)];last=ty;
-  const nm=WAVE_NAMES[ty];out.push({at:Math.round(t*10)/10,dur:WAVE_DUR,type:ty,name:nm[Math.floor(Math.random()*nm.length)]});t+=22+Math.random()*8;}return out;}
+function planWaves(th=[]){const out=[];let t=16+Math.random()*4,last='';while(t<SHIFT-14){
+  {const a=t-WAVE_LEAD,z=t+WAVE_DUR+WAVE_REST,hit=th.find(h=>a<h.end+2&&z>h.start-1);if(hit){t=hit.end+2+WAVE_LEAD+Math.random()*3;continue;}} /* v74: two pressures never at once */const ks=Object.keys(WAVE_NAMES).filter(k=>k!==last),ty=ks[Math.floor(Math.random()*ks.length)];last=ty;
+  const nm=WAVE_NAMES[ty];out.push({at:Math.round(t*10)/10,dur:WAVE_DUR,type:ty,name:nm[Math.floor(Math.random()*nm.length)]});t+=17+Math.random()*3;}return out;}
 const waveNow=()=>S?.waves?.find(w=>!w.burst&&S.time>=w.at&&S.time<w.at+w.dur)||null;
 // lane: one calm line at a time, fading — overflow and virus threat cover it; then a wave (soon / now); then, in real shifts, a joke now and then
 const FUN=['Боты на смене. Всё под контролем','Индексирую… шутка, всё в порядке','Бот 1 просит отпуск. Отказано','Кто-то назвал файл «финал_точно_финал2»',
