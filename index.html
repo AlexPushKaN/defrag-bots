@@ -358,7 +358,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v77', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v78', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -557,11 +557,12 @@ function renderRobots(force){if(!S)return;const price=PRICES[S.bots.length-1],bu
   if(!can&&S.readyFor===S.bots.length&&S.credits<price)S.readyFor=null;
   const nag=can&&S.time-S.readyAt>=NAG_AFTER;
   const avState=b=>{if(b.pref!=='AV')return '';const p=b.busy&&S.pieces.get(b.busy); /* v77: honest — an AV finishing its old job says so (it keeps the speed it started with) */
-    if(p?.proc)return p.vir?'удаляет':'доделывает';if(S.credits<=0)return 'нет кр.';return b.scan?(b.scan.mem?'скан памяти':'скан входа'):'ждёт';};
+    if(b.scan)return b.scan.mem?'скан памяти':'скан входа';if(p?.proc){if(p.vir)return 'удаляет';const pr=p.proc,act=Math.max(1,pr.bots.length-(pr.paused?.size||0));return 'доделывает|ещё '+Math.max(1,Math.ceil((pr.dur-pr.t)/CL_SPEED[Math.min(act,CL_SPEED.length)-1]))+' с';}
+    if(S.credits<=0)return 'нет кр.';return 'ждёт';};
   const key=S.bots.map(b=>b.id+(b.pref||'*')+avState(b)).join()+'|'+S.bots.length+'|'+can+'|'+nag+'|'+!!S.avNag+'|'+S.state;
   if(force||key!==robotsKey){robotsKey=key;robotsEl.replaceChildren();
     for(const b of S.bots){const c=document.createElement('button');c.className='rcard'+(b.pref==='AV'?' av':'')+(b.pref==='AV'&&S.avNag?' avnag':'');c.dataset.bot=b.id;c.style.background=b.pref?prefColor(b.pref):'var(--cream)';
-      c.innerHTML=`<span class="rname">Бот ${b.id}</span><span class="rpref">${b.pref||'Любые'}</span>`+(b.pref==='AV'?`<span class="rstate">${avState(b)}<i>−1 кр. / 2 с</i></span>`:'')+(b.pref==='AV'&&S.avNag?'<span class="nagtip">Угроза снята — верните бота</span>':'')+`<span class="rbar"></span>`;
+      c.innerHTML=`<span class="rname">Бот ${b.id}</span><span class="rpref">${b.pref||'Любые'}</span>`+(b.pref==='AV'?`<span class="rstate">${avState(b).split('|')[0]}<i>${avState(b).split('|')[1]||'−1 кр. / 2 с'}</i></span>`:'')+(b.pref==='AV'&&S.avNag?'<span class="nagtip">Угроза снята — верните бота</span>':'')+`<span class="rbar"></span>`;
       c.setAttribute('aria-label',`Бот ${b.id}: ${b.pref?'специалист '+b.pref:'берёт любые файлы'}. Нажмите, чтобы сменить тип`);
       c.addEventListener('pointerdown',e=>openFan(e,b,c));robotsEl.append(c);}
     if(S.bots.length<MAXR&&buyOk){const c=document.createElement('button');c.id='buy';c.className='rcard buy'+(can?' ready':'')+(nag?' nag':'');c.disabled=!can&&S.state!=='play';
@@ -624,7 +625,13 @@ function tickInner(now){
     // robots: a specialist takes the oldest file of its type first, otherwise the oldest file of any type;
     // specialists choose before universal robots so a universal robot doesn't steal their files
     const idle=[...S.pieces.values()].filter(p=>!p.proc&&!(drag?.from==='board'&&drag.id===p.id)).sort((a,b)=>a.order-b.order);
-    for(const b of [...S.bots].sort((a,b)=>(b.pref?1:0)-(a.pref?1:0))){if(b.scan)continue;if(b.busy&&S.pieces.get(b.busy)?.proc)continue;b.busy=null;
+    for(const b of [...S.bots].sort((a,b)=>(b.pref?1:0)-(a.pref?1:0))){if(b.scan)continue;
+      // v78 (author): an AV still finishing its old job pauses it to check «?» on the intake (1 s each), then goes back to it — job and bonus kept
+      {const j0=b.busy&&S.pieces.get(b.busy)?.proc;if(b.pref!=='AV'&&j0?.paused?.delete(b.id))ev('av-resume',j0.lead,b.id);} /* switched away from AV while paused: the job runs on */
+      if(b.pref==='AV'){const jp=b.busy&&S.pieces.get(b.busy)?.proc;if(jp&&!jp.members.some(id=>S.pieces.get(id)?.vir)){
+        if(S.credits>0&&avStartScan(b,true)){if(!(jp.paused||(jp.paused=new Set())).has(b.id)){jp.paused.add(b.id);ev('av-pause',jp.lead,b.id);}continue;}
+        if(jp.paused?.delete(b.id))ev('av-resume',jp.lead,b.id);}}
+      if(b.busy&&S.pieces.get(b.busy)?.proc)continue;b.busy=null;
       if(b.pref==='AV'){if(S.credits<=0)continue;if(avStartScan(b))continue;}
       // a free specialist joins a running cluster of its type (up to CL_MAXBOTS robots on one cluster)
       if(b.pref&&b.pref!=='AV'){const pr=runningProcs().find(pr=>pr.members.length>1&&pr.type===b.pref&&pr.bots.length<CL_MAXBOTS);
@@ -644,7 +651,7 @@ function tickInner(now){
       for(const q of members){q.proc=pr;const l=F(q.id);if(l){l.bot=b.id;l.k=k;l.s=r1(S.time);if(members.length>1)l.cl=members.length;}}
       b.busy=p.id;if(members.length>1){S.clusters=(S.clusters||0)+1;ev('cluster',p.id,members.length,members.map(q=>q.id).join(','));}}
     {const seen=new Set();for(const p of [...S.pieces.values()]){const pr=p.proc;if(!pr||seen.has(pr))continue;seen.add(pr);
-      pr.t+=dt*CL_SPEED[Math.min(pr.bots.length,CL_SPEED.length)-1];if(pr.t<pr.dur)continue;
+      {const act=pr.bots.length-(pr.paused?.size||0);if(act<=0)continue;pr.t+=dt*CL_SPEED[Math.min(act,CL_SPEED.length)-1];}if(pr.t<pr.dur)continue;
       const ms=pr.members.map(id=>S.pieces.get(id)).filter(Boolean);let sum=0;
       {const real=ms.filter(q=>!q.vir).length;S.doneFiles=(S.doneFiles||0)+real;if(ms.length>1)S.cluFiles=(S.cluFiles||0)+real;if(pr.k===SPEC_OWN)S.specFiles=(S.specFiles||0)+real;}
       for(const q of ms){setCells(q,0);S.pieces.delete(q.id);const rw=pieceReward(q);S.credits+=rw;sum+=rw;S.done++;const l=F(q.id);if(l)l.out=q.vir?'virus-killed':q.infected?'done-infected':'done';}
@@ -965,8 +972,8 @@ function virusTick(dt){
       if(cand.length){const q=cand[Math.floor(Math.random()*cand.length)];q.infected=1;q.spreadAt=S.time+V_SPREAD;S.vs.infected++;const l=F(q.id);if(l)l.inf=r1(S.time);ev('infect',p.id,q.id);fxInfect(q,p);sfx('infect');haptic('tick');p.spreadAt=S.time+V_SPREAD;}
       else p.spreadAt=S.time+1;}}}
 function wakeVirus(p,why,bot){p.awake=1;p.spreadAt=S.time+V_SPREAD;S.vs.woke++;ev('virus-wake',p.id,why,bot);fxVirusWake(p);sfx('glitch');haptic('warning');}
-function avStartScan(b){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
-  for(let i=0;i<Math.min(VIS,S.queue.length);i++){const f=S.queue[i];if(!f.sus||f.scan||taken.has(f.id)||(drag&&drag.id===f.id))continue;b.scan={id:f.id,t:0,dur:V_SCAN};b.busy=null;return true;}return false;}
+function avStartScan(b,keep){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
+  for(let i=0;i<Math.min(VIS,S.queue.length);i++){const f=S.queue[i];if(!f.sus||f.scan||taken.has(f.id)||(drag&&drag.id===f.id))continue;b.scan={id:f.id,t:0,dur:V_SCAN};if(!keep)b.busy=null;return true;}return false;}
 // v77 (author): when the intake has nothing to check and no virus is awake, the AV checks the «?» files lying in memory,
 // one at a time, oldest first; after each one it looks at the intake again (the intake always comes first)
 function avStartMemScan(b){const taken=new Set(S.bots.filter(x=>x.scan).map(x=>x.scan.id));
