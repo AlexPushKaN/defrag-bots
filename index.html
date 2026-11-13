@@ -355,7 +355,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v75', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v76', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -376,6 +376,7 @@ let S, L=null, cell=36, raf=0, last=0, nextId=1;
 
 function rotate(shape){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return r.map(([x,y])=>[x-mx,y-my]);}
 function rotatePoint(shape,[px,py]){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return [maxY-py-mx,px-my];}
+const BAG={TMP:7,DOC:6,PNG:4,RAW:3};
 function pickType(){const c=S?DCFG():null;{const w=S&&waveNow();if(w)return w.type;}
   // v71 (author): day 3 until both lessons are done — different types take turns (no type twice in a row) and every 3rd file is
   // the twin of a lone file waiting in memory, so «move it to its twin» comes for sure and never for a file that already has company
@@ -383,6 +384,10 @@ function pickType(){const c=S?DCFG():null;{const w=S&&waveNow();if(w)return w.ty
     if(S.d3n%3===0){const lone=[...S.pieces.values()].filter(p=>!p.proc&&!p.vir&&!neighbours(p).some(n=>n.type===p.type));if(lone.length){const t=lone[0].type;S.lastType=t;return t;}}
     const ks=Object.keys(c.types).filter(k=>k!==S.lastType);const t=ks[Math.floor(Math.random()*ks.length)];S.lastType=t;return t;}
   if(c?.repeat&&S.lastType&&Math.random()<c.repeat)return S.lastType;
+  // v76 (author): the real shift draws types from a shuffled bag of 20 (TMP 7, DOC 6, PNG 4, RAW 3) — the same mix every 20 files, no unlucky runs
+  if(S&&!c.types){if(!S.bag?.length){const b=[];for(const [k,n] of Object.entries(BAG))for(let i=0;i<n;i++)b.push(k);for(let k=0;k<50;k++){for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+      /* no two RAW in a row, also across bags (the bag is drawn from its end) */if(!b.some((x,i)=>x==='RAW'&&(b[i+1]==='RAW'||(i===b.length-1&&S.lastType==='RAW'))))break;}S.bag=b;}
+    const t=S.bag.pop();S.lastType=t;return t;}
   const w=c?.types||Object.fromEntries(Object.entries(TYPES).map(([k,t])=>[k,t.w]));const tot=Object.values(w).reduce((a,b)=>a+b,0);
   let n=Math.random()*tot;for(const [k,v] of Object.entries(w)){n-=v;if(n<0){if(S)S.lastType=k;return k;}}return 'TMP';}
 // v67: does a quarter turn visibly change the file? (a single cell or a 2×2 square does not)
@@ -902,24 +907,30 @@ function prefColor(pf){return pf==='AV'?'var(--av)':TYPES[pf].color;}
 // v74 (author's log: «еле прошёл»): a wave brings ~1.5× the usual cells per second (not 1.8×), then WAVE_REST s with no new files —
 // rush, then a breather to clear the intake. Extra cells of a wave ≈ the cells the breather skips, so the shift's load stays as before waves.
 const WAVE_LEAD=8, WAVE_DUR=6, WAVE_REST=3.5, WAVE_BASE=1;
-const WAVE_RATE={TMP:.35,DOC:.66,PNG:.77,RAW:1.2};
+const WAVE_RATE={TMP:.62,DOC:.66,PNG:.77,RAW:1.2}; /* v76: files come at most ~1.6× as often (the hand is the limit), so a TMP wave is many small files at a pace a hand can keep */
 const WAVE_NAMES={DOC:['Архив бухгалтерии','Договоры от юристов','Идёт годовой отчёт'],
   PNG:['Фото с корпоратива','Мемы с котами','Гора скриншотов'],
   RAW:['Свадьба в RAW','Съёмка с дрона','Аудиобиблиотека'],
   TMP:['Браузер чистит кэш','Распаковка обновления','Установщик мусорит']};
 function planWaves(th=[]){const out=[];let t=16+Math.random()*4,last='';while(t<SHIFT-14){
-  {const a=t-WAVE_LEAD,z=t+WAVE_DUR+WAVE_REST,hit=th.find(h=>a<h.end+2&&z>h.start-1);if(hit){t=hit.end+2+WAVE_LEAD+Math.random()*3;continue;}} /* v74: two pressures never at once */const ks=Object.keys(WAVE_NAMES).filter(k=>k!==last),ty=ks[Math.floor(Math.random()*ks.length)];last=ty;
-  const nm=WAVE_NAMES[ty];out.push({at:Math.round(t*10)/10,dur:WAVE_DUR,type:ty,name:nm[Math.floor(Math.random()*nm.length)]});t+=17+Math.random()*3;}return out;}
-const waveNow=()=>S?.waves?.find(w=>!w.burst&&S.time>=w.at&&S.time<w.at+w.dur)||null;
+  {const a=t-WAVE_LEAD,z=t+WAVE_DUR+WAVE_REST,hit=th.find(h=>a<h.end+2&&z>h.start-1);if(hit){t=hit.end+2+WAVE_LEAD+Math.random()*3;continue;}} /* v74: two pressures never at once */
+  out.push({at:Math.round(t*10)/10,dur:WAVE_DUR,type:null,name:''});t+=17+Math.random()*3;}return out;}
+// v76 (author): the type is chosen at the forecast (WAVE_LEAD s ahead, so the forecast stays true), looking at the player:
+// the first wave is light (TMP or DOC); no RAW wave while there is one bot or the memory is over 60% full; never the same type twice
+function waveAssign(){if(!S?.waves)return;for(const [i,w] of S.waves.entries()){if(w.burst||w.type||S.time<w.at-WAVE_LEAD)continue;
+  const prev=S.waves.slice(0,i).reverse().find(x=>x.type)?.type;let ks=i===0?['TMP','DOC']:Object.keys(WAVE_NAMES);
+  if(S.bots.length<2||fill()/(COLS*ROWS)>.6)ks=ks.filter(k=>k!=='RAW');ks=ks.filter(k=>k!==prev);
+  const ty=ks[Math.floor(Math.random()*ks.length)],nm=WAVE_NAMES[ty];w.type=ty;w.name=nm[Math.floor(Math.random()*nm.length)];w.why=[S.bots.length,Math.round(100*fill()/(COLS*ROWS))];}}
+const waveNow=()=>S?.waves?.find(w=>!w.burst&&w.type&&S.time>=w.at&&S.time<w.at+w.dur)||null;
 // lane: one calm line at a time, fading — overflow and virus threat cover it; then a wave (soon / now); then, in real shifts, a joke now and then
 const FUN=['Боты на смене. Всё под контролем','Индексирую… шутка, всё в порядке','Бот 1 просит отпуск. Отказано','Кто-то назвал файл «финал_точно_финал2»',
   'Корзина пуста. Подозрительно','Кофемашина тоже просит дефрагментацию','Сервер передаёт привет','Память дышит ровно','Файлы ведут себя прилично'];
 const tpill=t=>`<i class="tp" style="background:${prefColor(t)}">${t}</i>`;
-function laneTick(){if(!S||S.state!=='play')return;const h=$('laneHint');let key='calm',html='вход в норме',cls='';
+function laneTick(){if(!S||S.state!=='play')return;waveAssign();const h=$('laneHint');let key='calm',html='вход в норме',cls='';
   const w=S.waves.find(w=>S.time>=w.at-WAVE_LEAD&&S.time<w.at+w.dur);
   if(w){const soon=S.time<w.at,n=Math.ceil(w.at-S.time);key=(soon?'soon'+n:'now')+w.at;cls=soon?'wave':'wave now';
     html=`<small>${soon?'через '+n+' с':'сейчас'}</small><span>${(w.types||[w.type]).map(tpill).join('')} ${w.name}</span>`;
-    if(soon&&!w.told){w.told=1;ev('wave-soon',w.type||'mix',w.at);}if(!soon&&!w.on){w.on=1;if(!w.burst)ev('wave',w.type,w.name);}}
+    if(soon&&!w.told){w.told=1;ev('wave-soon',w.type||'mix',w.at,...(w.why||[]));}if(!soon&&!w.on){w.on=1;if(!w.burst)ev('wave',w.type,w.name);}}
   else if(!DCFG().tut&&S.time>=S.funNext){if(S.time<S.funNext+5&&qCells()<QCELLS*.5){key='fun'+S.funNext;html=S.funLine||(S.funLine=FUN[Math.floor(Math.random()*FUN.length)]);cls='fun';}
     else if(S.time>=S.funNext+5||qCells()>=QCELLS*.5){S.funNext=S.time+14+Math.random()*8;S.funLine='';}}
   if(key===S.laneKey)return;const fresh=key.replace(/\d+(\.\d+)?$/,'')!==S.laneKey.replace(/\d+(\.\d+)?$/,'')||key.startsWith('now')||key.startsWith('fun')||key==='calm';S.laneKey=key;
