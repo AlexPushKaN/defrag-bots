@@ -3,7 +3,7 @@
 <meta name="theme-color" content="#262a9e">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
-<title>Defrag Bots: The Game</title>
+<title>Defrag Bots</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=JetBrains+Mono:wght@700&display=swap">
 <style>
@@ -194,7 +194,8 @@ button.primary{background:var(--gold)}
 .hint.below::after{top:-8px;border-right:0;border-bottom:0}.hint.above::after{bottom:-8px;border-left:0;border-top:0}
 .tfinger{position:fixed;z-index:85;pointer-events:none;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid #fff;box-shadow:0 0 0 7px rgba(255,255,255,.18)}
 .tut-hide{display:none!important}
-#dialog .ver{order:9;align-self:center;font-family:var(--mono);font-size:11px;opacity:.6}
+#dialog .ver{order:9;align-self:center;font-family:var(--mono);font-size:11px;opacity:.6;padding:8px 14px;-webkit-user-select:none;user-select:none}
+#dialog .daypick[hidden]{display:none}
 .spot{position:fixed;z-index:70;pointer-events:none;border-radius:16px;border:3px solid #fff;box-shadow:0 0 0 9999px rgba(12,10,40,.62),0 0 18px 4px rgba(255,255,255,.55);transition:all .2s ease}
 .coach{pointer-events:none;position:fixed;z-index:95;background:var(--cream);color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:10px 12px;font-weight:800;font-size:15px;line-height:1.3;box-shadow:0 4px 0 var(--ink);width:min(320px,86vw);box-sizing:border-box;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
 .coach .rotico{display:inline-grid;place-items:center;width:22px;height:22px;margin:0 2px;vertical-align:-5px;border-radius:7px;background:var(--gold);border:2px solid var(--ink);box-shadow:0 2px 0 var(--ink);color:var(--ink);font-size:15px;font-weight:900;line-height:1}
@@ -315,11 +316,11 @@ button.primary{background:var(--gold)}
 
 <div id="overlay">
   <div class="card" id="dialog">
-    <div class="splash"><div class="sbots" aria-hidden="true"><i></i><i></i><i></i></div><h2 class="logo">Defrag Bots<small>THE GAME</small></h2></div>
+    <div class="splash"><div class="sbots" aria-hidden="true"><i></i><i></i><i></i></div><h2 class="logo">Defrag Bots</h2></div>
     <button id="exportBtn" hidden>Отправить журналы</button>
     <button class="primary big" id="startBtn">Играть</button>
     <small class="ver" id="verLbl"></small>
-    <div class="daypick" role="group" aria-label="С какого дня начать"><span>Начать с:</span><button type="button" data-d="1">День 1</button><button type="button" data-d="2">2</button><button type="button" data-d="3">3</button><button type="button" data-d="4">4</button><button type="button" data-d="5">Полная</button></div>
+    <div class="daypick" hidden role="group" aria-label="С какого дня начать"><span>Начать с:</span><button type="button" data-d="1">День 1</button><button type="button" data-d="2">2</button><button type="button" data-d="3">3</button><button type="button" data-d="4">4</button><button type="button" data-d="5">Полная</button></div>
     <button class="linkish" id="skipBtn" hidden>Я уже умею — сразу полная смена</button>
     <button class="linkish" id="replayBtn" hidden>Пройти обучение заново</button>
   </div>
@@ -358,7 +359,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v78', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v79', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -1141,7 +1142,7 @@ const DAYS={
 const DCFG=()=>DAYS[S?.day??0]||DAYS[0];
 // TUT_DEV (author, 2026-11-11): while the tutorial is being tuned, every load starts at day 1 and shows every step again;
 // progress lives only until the page is closed. Set to false for the release: then progress is kept for each player.
-const TUT_DEV=true;
+const TUT_DEV=false; /* v79 (author): release behaviour — the tutorial runs once, progress is kept */
 let PROG={day:1,hintsOff:false};if(!TUT_DEV)try{const o=JSON.parse(localStorage.getItem('defrag-progress-v50')||'null');if(o)PROG={...PROG,...o};}catch(e){}
 function setProg(day,extra){PROG={...PROG,day,...extra};if(!TUT_DEV)try{localStorage.setItem('defrag-progress-v50',JSON.stringify(PROG));}catch(e){}}
 const curDay=()=>PROG.day>=1&&PROG.day<=4?PROG.day:0;
@@ -1288,9 +1289,12 @@ $('verLbl').textContent='версия '+VERSION;
 function startDay(d){SEEN={};try{localStorage.removeItem('defrag-coach-v50');}catch(e){}setProg(d,{hintsOff:d>4});start();}
 document.querySelectorAll('#dialog .daypick button').forEach(b=>{b.classList.toggle('on',+b.dataset.d===(curDay()||5));b.onclick=()=>startDay(+b.dataset.d);});
 $('skipBtn').hidden=true;$('replayBtn').hidden=true;
-$('startBtn').textContent=curDay()?'Играть · день '+curDay():'Играть · полная смена';
+$('startBtn').textContent='Играть'; /* v79 (author): one button — the tutorial day or the full shift, whichever is next */
+// a hidden door for the author: 5 quick taps on the version line show the day picker (remembered until 5 taps again)
+{let DEV=false;try{DEV=localStorage.getItem('defrag-dev')==='1';}catch(e){}const dp=document.querySelector('#dialog .daypick');dp.hidden=!DEV;
+  let taps=[];$('verLbl').addEventListener('click',()=>{const t=performance.now();taps=taps.filter(x=>t-x<2000);taps.push(t);if(taps.length>=5){taps=[];DEV=!DEV;dp.hidden=!DEV;try{localStorage.setItem('defrag-dev',DEV?'1':'0');}catch(e){}$('verLbl').textContent='версия '+VERSION+(DEV?' · разработчик':'');}});
+  if(DEV)$('verLbl').textContent='версия '+VERSION+' · разработчик';}
 $('skipBtn').onclick=()=>{setProg(5,{hintsOff:true});$('skipBtn').hidden=true;start();};
-if(curDay()>1)$('startBtn').textContent='Играть · день '+curDay();
 tutLabels(curDay());
 
 // ---------- Words for languages (v63) ----------
