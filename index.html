@@ -34,7 +34,7 @@ body{margin:0;background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
 #app{position:relative}
 #app.stage{position:absolute;left:0;top:0;margin:0;max-width:none;transform-origin:0 0}
 #tray{flex-wrap:wrap;row-gap:8px;align-content:flex-start}
-#trayRow2{flex:0 0 100%;display:flex;gap:8px;align-items:stretch;height:50px}
+#trayRow2{flex:0 0 100%;min-width:0;max-width:100%;display:flex;gap:8px;align-items:stretch;height:50px}
 #slowWrap{flex:0 0 122px;position:relative;display:flex}
 #slowBtn{flex:1;width:100%;min-height:0;height:100%;padding:0 8px;border-radius:12px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px;font-size:13px;line-height:1.05;text-align:left;position:relative;overflow:visible;
   background:var(--ink);color:#7ff3ff;border:3px solid #7ff3ff;box-shadow:0 0 0 2px var(--ink),0 0 14px 2px rgba(127,243,255,.6),inset 0 0 10px rgba(127,243,255,.3);touch-action:none;transition:opacity .2s,filter .2s}
@@ -52,7 +52,14 @@ body{margin:0;background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
 body.slowmo::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(127,243,255,.28));z-index:30}
 @media (prefers-reduced-motion:reduce){#slowBtn.hot{animation:none}}
 #lane{flex:1;min-width:0;position:relative;border-radius:12px;border:2px dashed rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
-#laneHint{color:var(--muted);font-size:11px;font-weight:800;opacity:.7}
+#laneHint{color:var(--muted);font-size:11px;font-weight:800;opacity:.7;text-align:center;padding:0 8px;max-width:100%;box-sizing:border-box;line-height:1.25}
+#laneHint.fun{opacity:.85;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#laneHint.wave{opacity:1;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;width:100%;min-width:0;overflow:hidden}
+#laneHint.wave small{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+#laneHint.wave.now small{color:#fff;background:var(--danger);border-radius:6px;padding:0 6px}
+#laneHint.wave span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#laneHint .tp{font-style:normal;display:inline-block;font-size:9px;font-weight:900;color:var(--ink);border:2px solid var(--ink);border-radius:6px;padding:0 4px;margin-right:3px;vertical-align:1px}
+#lane:has(#laneHint.wave){border-color:rgba(255,210,61,.55)}
 #lane:has(#alarm:not([hidden])){border-color:transparent}
 #lane:has(#alarm:not([hidden])) #laneHint{display:none}
 #lane #alarm{position:absolute;inset:-2px;z-index:2}
@@ -348,7 +355,7 @@ const procTime=f=>PER_CELL[f.type]*f.shape.length;
 const qCells=()=>S.queue.reduce((a,f)=>a+f.shape.length,0);
 const SPEC_OWN=0.8, SPEC_OTHER=1.2, PREFS=[null,'TMP','DOC','PNG','RAW','AV'];
 let COLS=8, ROWS=10; // v66: a wide window gets a 10×8 memory (chosen at the start of a shift)
-const VERSION='v72', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
+const VERSION='v73', SHIFT=120, QCELLS=24, VIS=3, FLOW=[2.8,1.9], PRICES=[30,50], MAXR=3, TRASH_COST=3;
 // Colour = file type; each type comes in several shapes (heavier types are bigger).
 const TYPES={
   TMP:{color:'var(--tmp)',time:3.75,reward:2,w:35,shapes:[[[0,0]],[[0,0],[1,0]],[[0,0],[1,0],[2,0]],[[0,0],[0,1],[1,1]]]}, // 1, 2, 3 in a row, corner of 3
@@ -369,7 +376,7 @@ let S, L=null, cell=36, raf=0, last=0, nextId=1;
 
 function rotate(shape){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return r.map(([x,y])=>[x-mx,y-my]);}
 function rotatePoint(shape,[px,py]){const maxY=Math.max(...shape.map(c=>c[1]));const r=shape.map(([x,y])=>[maxY-y,x]);const mx=Math.min(...r.map(c=>c[0])),my=Math.min(...r.map(c=>c[1]));return [maxY-py-mx,px-my];}
-function pickType(){const c=S?DCFG():null;
+function pickType(){const c=S?DCFG():null;{const w=S&&waveNow();if(w)return w.type;}
   // v71 (author): day 3 until both lessons are done — different types take turns (no type twice in a row) and every 3rd file is
   // the twin of a lone file waiting in memory, so «move it to its twin» comes for sure and never for a file that already has company
   if(S&&S.day===3&&c.tut&&!(SEEN.move&&SEEN.clusterwin)){S.d3n=(S.d3n||0)+1;
@@ -420,6 +427,7 @@ function reset(){
   const day=curDay();
   S={day,len:DAYS[day].len,waitFirst:day===1,slowShown:!DAYS[day].tut||day>=3||!!SEEN.slow,over:0,reserve:GRACE,flashes:0,overflows:0,time:0,credits:0,spent:0,bots:[{id:1,pref:null,busy:null}],slowRes:SLOW_CAP0,slowCap:SLOW_CAP0,slowUps:0,slowOn:false,vs:{arrived:0,scanned:0,avDel:0,placed:0,woke:0,infected:0,killed:0,avCost:0},threats:[],queue:[],pieces:new Map(),grid:Array.from({length:ROWS},()=>Array(COLS).fill(0)),spawn:1.0,state:'play',moves:0,done:0,order:0,trashed:0,slowT:0,slowDrags:0,nextSample:0};
   if(DAYS[day].robots)S.bots=Array.from({length:DAYS[day].robots},(_,i)=>({id:i+1,pref:null,busy:null}));
+  S.waves=DAYS[day].waves?planWaves():DAYS[day].burst?[{at:DAYS[day].burst,dur:1.5,burst:1,name:'Большая выгрузка',types:['RAW','PNG','DOC']}]:[];S.laneKey='';S.funNext=12+Math.random()*6;
   S.threats=DAYS[day].vir==='full'?planThreats():DAYS[day].vir==='one'?[{start:38,end:38+V_WIN,left:2,on:false}]:[];
   S.queue.push(newFile(),newFile(),newFile());
   if(day===1){const f=S.queue[0];f.type='DOC';f.si=0;f.shape=TYPES.DOC.shapes[0].map(c=>[...c]);const l=F(f.id);if(l){l.ty='DOC';l.si=0;}} // v58: the first file shows its turn clearly (an L, not a single square)
@@ -503,7 +511,7 @@ function updateOutlines(){if(!S||S.state!=='play'){if(outl.getAttribute('class')
   if(outl.getAttribute('class'))outl.setAttribute('class','');}
 for(const t of ['pointerdown','keydown'])addEventListener(t,()=>{lastInput=performance.now();},true);
 function render(){
-  if(!S)return;
+  if(!S)return;laneTick();
   updateOutlines();
   board.querySelectorAll('.piece:not(.ghost)').forEach(e=>{if(!S.pieces.has(+e.dataset.id)||(drag?.moved&&drag.id===+e.dataset.id))e.remove();});
   const CLU=clustersNow(),fb=fanState?.b?.id; /* v71 (author): while a bot's fan is open, its files in memory are lit and the rest dims */
@@ -600,7 +608,7 @@ function tickInner(now){
     if(DCFG().burst&&!S.burstDone&&S.time>=DCFG().burst&&!drag){S.burstDone=1;const big=[['RAW',TYPES.RAW.shapes[3]],['RAW',TYPES.RAW.shapes[2]],['PNG',TYPES.PNG.shapes[1]],['DOC',TYPES.DOC.shapes[5]]]; /* 10+8+6+5 = 29 cells, over 24 even with an empty intake */
       for(const [ty,sh] of big){const f={id:nextId++,type:ty,si:0,shape:sh.map(c=>[...c])};logArrive(f);S.queue.push(f);}ev('burst',qCells());fxShake(5);sfx('alarm');}
     S.spawn-=dt;if(S.spawn<=0&&DCFG().tut&&qCells()>=QCELLS-6)S.spawn=.4;
-    if(S.spawn<=0){const k=Math.min(1,S.time/S.len),fl=DCFG().flow;S.spawn=(fl[0]-(fl[0]-fl[1])*k)*(DCFG().tut?1+Math.max(0,fill()/(COLS*ROWS)-.45)*3:1);S.queue.push(maybeVirus(newFile(),S.spawn));}
+    if(S.spawn<=0){const k=Math.min(1,S.time/S.len),fl=DCFG().flow,wv=waveNow();S.spawn=(fl[0]-(fl[0]-fl[1])*k)*(DCFG().tut?1+Math.max(0,fill()/(COLS*ROWS)-.45)*3:1)*(DCFG().waves?(wv?WAVE_RATE[wv.type]:WAVE_BASE):1);S.queue.push(maybeVirus(newFile(),S.spawn));}
     // robots: a specialist takes the oldest file of its type first, otherwise the oldest file of any type;
     // specialists choose before universal robots so a universal robot doesn't steal their files
     const idle=[...S.pieces.values()].filter(p=>!p.proc&&!(drag?.from==='board'&&drag.id===p.id)).sort((a,b)=>a.order-b.order);
@@ -669,7 +677,7 @@ function pause(){if(S?.state!=='play')return;cancelDrag();closeFan();setSlowUi(f
   $('handL').onclick=()=>{setHand('left');$('handL').classList.add('on');$('handR').classList.remove('on');};$('resumeBtn').focus();}
 function resume(){if(S?.state!=='pause')return;S.state='play';musicMuffle(false);if(!mus?.id)musicStart();ev('resume');$('overlay').hidden=true;last=performance.now();render();try{window.focus();}catch(e){}}
 function start(){const note=$('note');if(L&&note&&note.value.trim()!==(L.comment||'')){L.comment=note.value.trim();saveRun();}
-  cancelDrag();logStart();reset();L.day=S.day;L.params.board=[COLS,ROWS];$('overlay').hidden=true;tutStart();audioInit();musicMuffle(false);musicStart();$('laneHint').textContent='вход в норме';layout();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);getDb();}
+  cancelDrag();logStart();reset();L.day=S.day;L.params.board=[COLS,ROWS];$('overlay').hidden=true;tutStart();audioInit();musicMuffle(false);musicStart();$('laneHint').textContent='вход в норме';$('laneHint').className='';layout();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);getDb();}
 
 // ---------- Input: drag only ----------
 // Drag a file from one of the three intake slots or a piece in memory; drop on the board or the trash.
@@ -887,6 +895,31 @@ function fxSpecial(text,kind,p){const br=board.r();let x=br.left+br.width/2,y=br
 const V_WAKE=[5,30], V_SPREAD=5, V_SLOW=2, V_SCAN=1, V_AV_KILL=1, V_BONUS=3, V_COST_EVERY=2, V_WIN=25, V_MAXCELLS=4;
 const BUG_SVG='<svg viewBox="0 0 20 20" width="100%" height="100%" aria-hidden="true"><ellipse cx="10" cy="11.5" rx="5" ry="6" fill="#14123a"/><circle cx="10" cy="5" r="3" fill="#14123a"/><path d="M5 9 1.5 7M5 12H1M5 15l-3 2.5M15 9l3.5-2M15 12h4M15 15l3 2.5M8.5 3 7 .8M11.5 3 13 .8" stroke="#14123a" stroke-width="1.6" stroke-linecap="round"/><path d="M10 6v11" stroke="#ff3d7f" stroke-width="1.2"/></svg>';
 function prefColor(pf){return pf==='AV'?'var(--av)':TYPES[pf].color;}
+// v73 (author): waves — a real, planned rush of one type, announced WAVE_LEAD s ahead in the lane, so the player can act
+// (free room, keep slow time, make a bot of that type). Names are the flavour. Base flow is a little slower to pay for them.
+const WAVE_LEAD=8, WAVE_DUR=6, WAVE_BASE=1.12;
+// a wave brings ~1.8× the usual cells per second: small TMP come much more often, big RAW at the usual pace (but all big)
+const WAVE_RATE={TMP:.3,DOC:.55,PNG:.65,RAW:1};
+const WAVE_NAMES={DOC:['Архив бухгалтерии','Договоры от юристов','Идёт годовой отчёт'],
+  PNG:['Фото с корпоратива','Мемы с котами','Гора скриншотов'],
+  RAW:['Свадьба в RAW','Съёмка с дрона','Аудиобиблиотека'],
+  TMP:['Браузер чистит кэш','Распаковка обновления','Установщик мусорит']};
+function planWaves(){const out=[];let t=18+Math.random()*6,last='';while(t<SHIFT-14){const ks=Object.keys(WAVE_NAMES).filter(k=>k!==last),ty=ks[Math.floor(Math.random()*ks.length)];last=ty;
+  const nm=WAVE_NAMES[ty];out.push({at:Math.round(t*10)/10,dur:WAVE_DUR,type:ty,name:nm[Math.floor(Math.random()*nm.length)]});t+=22+Math.random()*8;}return out;}
+const waveNow=()=>S?.waves?.find(w=>!w.burst&&S.time>=w.at&&S.time<w.at+w.dur)||null;
+// lane: one calm line at a time, fading — overflow and virus threat cover it; then a wave (soon / now); then, in real shifts, a joke now and then
+const FUN=['Боты на смене. Всё под контролем','Индексирую… шутка, всё в порядке','Бот 1 просит отпуск. Отказано','Кто-то назвал файл «финал_точно_финал2»',
+  'Корзина пуста. Подозрительно','Кофемашина тоже просит дефрагментацию','Сервер передаёт привет','Память дышит ровно','Файлы ведут себя прилично'];
+const tpill=t=>`<i class="tp" style="background:${prefColor(t)}">${t}</i>`;
+function laneTick(){if(!S||S.state!=='play')return;const h=$('laneHint');let key='calm',html='вход в норме',cls='';
+  const w=S.waves.find(w=>S.time>=w.at-WAVE_LEAD&&S.time<w.at+w.dur);
+  if(w){const soon=S.time<w.at,n=Math.ceil(w.at-S.time);key=(soon?'soon'+n:'now')+w.at;cls=soon?'wave':'wave now';
+    html=`<small>${soon?'через '+n+' с':'сейчас'}</small><span>${(w.types||[w.type]).map(tpill).join('')} ${w.name}</span>`;
+    if(soon&&!w.told){w.told=1;ev('wave-soon',w.type||'mix',w.at);}if(!soon&&!w.on){w.on=1;if(!w.burst)ev('wave',w.type,w.name);}}
+  else if(!DCFG().tut&&S.time>=S.funNext){if(S.time<S.funNext+5&&qCells()<QCELLS*.5){key='fun'+S.funNext;html=S.funLine||(S.funLine=FUN[Math.floor(Math.random()*FUN.length)]);cls='fun';}
+    else if(S.time>=S.funNext+5||qCells()>=QCELLS*.5){S.funNext=S.time+14+Math.random()*8;S.funLine='';}}
+  if(key===S.laneKey)return;const fresh=key.replace(/\d+(\.\d+)?$/,'')!==S.laneKey.replace(/\d+(\.\d+)?$/,'')||key.startsWith('now')||key.startsWith('fun')||key==='calm';S.laneKey=key;
+  h.className=cls;h.innerHTML=html;if(fresh&&!REDUCED)h.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'none'}],{duration:280,easing:'ease-out'});}
 function planThreats(){const a=50+Math.random()*3,b=80+Math.random()*3; /* windows 25 s each, a short calm in between */return [a,b].map(t=>({start:t,end:t+V_WIN,left:1+(Math.random()<.5?1:0),on:false}));}
 function threatNow(){return S?.threats?.find(w=>S.time>=w.start&&S.time<w.end);}
 function maybeVirus(f,interval){const w=threatNow();if(w){f.sus=1;const l=F(f.id);if(l)l.sus=1;}if(!w||w.left<=0||S.time<w.start+3)return f;
@@ -1068,7 +1101,7 @@ const DAYS={
   2:{tut:1,len:SHIFT,burst:62,flow:[3.2,2.6],types:{TMP:35,DOC:35,PNG:20,RAW:10},buy:1,spec:1,clusters:0,vir:0,slowUp:0,title:'Команда ботов',lines:['Покупай ботов за кредиты','Каждому боту — свой тип файлов'],unlock:'Кластеры',learned:'Ты научился покупать ботов и замедлять время'},
   3:{tut:1,len:SHIFT,flow:[3.1,2.5],types:{TMP:20,DOC:35,PNG:35,RAW:10},repeat:.45,buy:1,spec:1,clusters:1,vir:0,slowUp:0,title:'Кластеры',lines:['Одинаковые файлы рядом','уходят вместе и быстрее'],unlock:'Вирусы',learned:'Ты научился двигать файлы и собирать кластеры'},
   4:{tut:1,len:SHIFT,flow:[3.0,2.4],types:{TMP:25,DOC:35,PNG:30,RAW:10},buy:1,spec:1,clusters:1,vir:'one',slowUp:1,title:'Вирусы',lines:['Иногда в потоке прячется вирус','Его удаляет бот-антивирус'],unlock:'Полная игра',learned:'Ты научился ловить вирусы антивирусом'},
-  0:{tut:0,len:SHIFT,flow:FLOW,buy:1,spec:1,clusters:1,vir:'full',slowUp:1}};
+  0:{tut:0,len:SHIFT,waves:1,flow:FLOW,buy:1,spec:1,clusters:1,vir:'full',slowUp:1}};
 const DCFG=()=>DAYS[S?.day??0]||DAYS[0];
 // TUT_DEV (author, 2026-11-11): while the tutorial is being tuned, every load starts at day 1 and shows every step again;
 // progress lives only until the page is closed. Set to false for the release: then progress is kept for each player.
